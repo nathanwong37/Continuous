@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/memberlist"
+	"github.com/temp/cogs"
 )
 
 func TestHashFunc(t *testing.T) {
@@ -41,11 +42,66 @@ func TestHashFunc(t *testing.T) {
 	test4.Join(nodes)
 	time.Sleep(5 * time.Second)
 	test.printKeys()
-	test2.printKeys()
-	test3.printKeys()
-	test4.printKeys()
+	// a := test.syncShards()
+	// b := test2.syncShards()
+	// c := test3.syncShards()
+	// d := test4.syncShards()
+	test2.shutDown()
+	test.nodeLeave(test2.M.LocalNode().Address())
+	time.Sleep(10 * time.Second)
+	test.printKeys()
+	// a1 := cogs.NewDirector()
+	// b1 := cogs.NewDirector()
+	// c1 := cogs.NewDirector()
+	// d1 := cogs.NewDirector()
+
+	// a1.UpdateShards(a)
+	// b1.UpdateShards(b)
+	// c1.UpdateShards(c)
+	// d1.UpdateShards(d)
 }
 
+func TestDirector(t *testing.T) {
+	conf3 := memberlist.DefaultLocalConfig()
+	nodes := []string{
+		"127.0.0.1:7946",
+	}
+	test := NewMessenger(conf3)
+	test.Join(nodes)
+	a := test.syncShards()
+	b := cogs.NewDirector()
+	b.UpdateShards(a)
+
+}
+
+func TestBinarySearch(t *testing.T) {
+	arrs := [9]int{0, 1, 2, 3, 4, 5, 6, 7, 8}
+	var arr []int = arrs[0:9]
+	a := binarySearch(arr, 0, len(arr)-1, 7)
+	fmt.Printf("%d\n", a)
+}
+
+func TestAddress(t *testing.T) {
+	uuid := "ac65b87e-d5b6-4131-b4e2-789d1fc98b7a"
+	conf := memberlist.DefaultLocalConfig()
+	nodes := []string{
+		"127.0.0.1:7946",
+	}
+	test := NewMessenger(conf)
+	test.Join(nodes)
+	conf2 := memberlist.DefaultLocalConfig()
+	conf2.Name = "NotFeelingLucky"
+	conf2.BindAddr = "127.0.0.1"
+	conf2.BindPort = 2134
+	conf2.AdvertiseAddr = "127.0.0.1"
+	conf2.AdvertisePort = 2134
+	test2 := NewMessenger(conf2)
+	test2.Join(nodes)
+	time.Sleep(1 * time.Second)
+	a, b := test.getAddress(uuid)
+	fmt.Println(a)
+	fmt.Printf("%d\n", b)
+}
 func (messenger *Messenger) printKeys() {
 	for k := range messenger.keys {
 		fmt.Printf("%d  %d\n", messenger.keys[k], k)

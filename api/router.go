@@ -9,16 +9,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/temp/messenger"
 	"github.com/temp/transporter"
 )
 
-type methodRunner struct{}
+type methodRunner struct {
+	messenger *messenger.Messenger
+}
 
 type params struct {
 	Count     int32  `json:"count,omitempty"`
 	Namespace string `json:"namespace"`
 	Interval  string `json:"interval"`
 	StartTime string `json:"startTime,omitempty"`
+}
+
+//NewMethodRunner is used to create a new method runner
+func NewMethodRunner(msnger *messenger.Messenger) *methodRunner {
+	return &methodRunner{
+		messenger: msnger,
+	}
 }
 
 //defaults to an error, not found
@@ -39,10 +49,10 @@ func (m *methodRunner) Create(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	client := grpcClient.NewGrpcClient(nil)
+	client := grpcClient.NewGrpcClient(nil, m.messenger)
 	uuid, err := client.CreateTimer(val.Count, val.Namespace, val.Interval, val.StartTime)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error"})
+		c.JSON(http.StatusLocked, gin.H{"message": "Error"})
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"UUID": uuid, "success": 201})
@@ -73,7 +83,7 @@ func (m *methodRunner) Get(c *gin.Context) {
 func (m *methodRunner) Delete(c *gin.Context) {
 	userID := c.Params.ByName("userid")
 	personalUUID := c.Params.ByName("uuid")
-	client := grpcClient.NewGrpcClient(nil)
+	client := grpcClient.NewGrpcClient(nil, m.messenger)
 	work, err := client.DeleteTimer(personalUUID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error"})

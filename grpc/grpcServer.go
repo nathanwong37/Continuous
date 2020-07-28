@@ -4,13 +4,22 @@ import (
 	"context"
 	"net"
 
+	"github.com/temp/messenger"
 	proto "github.com/temp/plugins"
-
 	"google.golang.org/grpc"
 )
 
 //GrpcServer is a struct to call methods
-type GrpcServer struct{}
+type GrpcServer struct {
+	messenger *messenger.Messenger
+}
+
+//NewGrpcServer is a constructor
+func NewGrpcServer(messenger *messenger.Messenger) *GrpcServer {
+	return &GrpcServer{
+		messenger: messenger,
+	}
+}
 
 //Serve is just for the server to run in the back
 func (server *GrpcServer) Serve(listener net.Listener) error {
@@ -36,6 +45,7 @@ func (server *GrpcServer) Create(ctx context.Context, createRequest *proto.Creat
 	//at this point send timerinfo struct to messenger, having messenger deal with this
 	//messenger.GetTimer(&timer)
 	//return the create job response now
+	server.messenger.CreateTime(&timer)
 	return &proto.CreateJobResponse{Timerinfo: &timer}, nil
 }
 

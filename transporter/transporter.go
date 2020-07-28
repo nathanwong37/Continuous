@@ -26,6 +26,7 @@ var amountFired = "amount_fired"
 var values = "VALUES"
 var into = "INTO"
 
+//Transport struct just to call methods
 type Transport struct{}
 
 //TimerInfo holds all the information that a timer has
@@ -52,11 +53,7 @@ func (transporter *Transport) connect() {
 	defer db.Close()
 }
 
-func (timerInfo *TimerInfo) String() string {
-	return fmt.Sprintf("Test123 %s", timerInfo.Namespace)
-}
-
-//function get connects to database, and gets the matching values
+//Get connects to database, and gets the matching values
 //returns a struct of information
 //uuid and namespace should be validated before hand
 func (transporter *Transport) Get(uuid uuid.UUID, namespace string) (*TimerInfo, error) {
@@ -82,7 +79,7 @@ func (transporter *Transport) Get(uuid uuid.UUID, namespace string) (*TimerInfo,
 	return &timerInfo, nil
 }
 
-//function creates connects to database and puts in the values
+//Create connects to database and puts in the values
 //should take in some TimerInfo object,
 func (transporter *Transport) Create(timerinfo *TimerInfo) (bool, error) {
 	db, err := sql.Open(datab, connect)
@@ -103,7 +100,7 @@ func (transporter *Transport) Create(timerinfo *TimerInfo) (bool, error) {
 	return true, nil
 }
 
-//function that will delete from the database, if uuid and namespace match
+//Delete from the database, if uuid and namespace match
 func (transporter *Transport) Delete(uuid uuid.UUID, namespace string) (bool, error) {
 	db, err := sql.Open(datab, connect)
 	if err != nil {

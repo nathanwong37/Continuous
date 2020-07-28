@@ -1,3 +1,4 @@
+//Might have to have a messenger be part of the client, blegh
 package grpc
 
 import (
@@ -5,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/temp/messenger"
 	proto "github.com/temp/plugins"
 
 	"github.com/google/uuid"
@@ -14,10 +16,11 @@ import (
 //Client is for dial options, as well as to use important methods
 type Client struct {
 	dialOption []grpc.DialOption
+	messenger  *messenger.Messenger
 }
 
 //NewGrpcClient is a Constructor that returns a new instance of grpc client
-func NewGrpcClient(dialOpt grpc.DialOption) *Client {
+func NewGrpcClient(dialOpt grpc.DialOption, mess *messenger.Messenger) *Client {
 	if dialOpt == nil {
 		dialOpt = grpc.WithInsecure()
 	}
@@ -26,6 +29,7 @@ func NewGrpcClient(dialOpt grpc.DialOption) *Client {
 			dialOpt,
 			grpc.WithBlock(),
 		},
+		messenger: mess,
 	}
 }
 
@@ -45,13 +49,10 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 		return "", err
 	}
 	timerIDString := timerID.String()
-	//dummy value for shard, normally would hash function to determine shard
-	//timer.ShardId = something.membership.calculateShard(timerID)
-	var shardResult int32 = 4
-	//At this point We would use the shardID to  determine where to send the connection
-	//For now we use local host
-	//addr := something.membership.GetAddress(shardId)
-	addr := "localhost:4040"
+	addr, shardResult := client.messenger.GetAddress(timerIDString)
+	shardRes := int32(shardResult)
+	//bug can't connect to
+	addr = "localhost:4040"
 	conn, err := client.Connect(addr)
 	if err != nil {
 		return "", err
@@ -61,7 +62,7 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 	c := proto.NewActionsClient(conn)
 	resp, err := c.Create(context.Background(), &proto.CreateJobRequest{
 		TimerId:   timerIDString,
-		ShardId:   shardResult,
+		ShardId:   shardRes,
 		NameSpace: namespace,
 		Interval:  interval,
 		Count:     count,
