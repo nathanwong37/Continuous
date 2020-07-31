@@ -18,15 +18,15 @@ func TestRun(t *testing.T) {
 		"localhost:7946",
 	}
 	test.Join(nodes)
-	conf2 := memberlist.DefaultLocalConfig()
-	conf2.Name = "NotFeelingLucky"
-	conf2.BindAddr = "127.0.1.1"
-	conf2.BindPort = 2134
-	conf2.AdvertiseAddr = "127.0.0.1"
-	conf2.AdvertisePort = 2134
-	test2 := NewMessenger(conf2)
-	test2.Join(nodes)
-	time.Sleep(5 * time.Second)
+	// conf2 := memberlist.DefaultLocalConfig()
+	// conf2.Name = "NotFeelingLucky"
+	// conf2.BindAddr = "127.0.1.1"
+	// conf2.BindPort = 2134
+	// conf2.AdvertiseAddr = "127.0.0.1"
+	// conf2.AdvertisePort = 2134
+	// test2 := NewMessenger(conf2)
+	// test2.Join(nodes)
+	time.Sleep(25 * time.Second)
 
 }
 

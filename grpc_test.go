@@ -38,9 +38,4 @@ func TestClientConnection(t *testing.T) {
 		panic(err)
 	}
 
-	// _, err := client.CreateTimer(5, "Nathan Wong", "00:00:10", "2020")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 }
