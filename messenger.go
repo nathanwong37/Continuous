@@ -10,14 +10,7 @@ import (
 	"sync"
 	"time"
 
-	// "google.golang.org/genproto/googleapis/api"
-	// "google.golang.org/genproto/protobuf/api"
-
 	"github.com/hashicorp/memberlist"
-	//HTTPTransport "github.com/temp/api"
-	//"github.com/temp/cogs"
-	//"github.com/temp/grpc"
-	//"github.com/temp/cogs"
 	proto "github.com/temp/plugins"
 )
 
@@ -64,6 +57,7 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 }
 
 //Join functionality is used to try and join other memberlists
+//Also starts grpc server, client and api
 func (messenger *Messenger) Join(addr []string) int {
 	go messenger.ReadFromChannel()
 	try, err := messenger.M.Join(addr)
@@ -88,6 +82,7 @@ func (messenger *Messenger) Join(addr []string) int {
 	return try
 }
 
+//hash function using sha256
 func hash(toHash string, shard int) int {
 	hashfunc := sha256.New()
 	hashfunc.Write([]byte(toHash))
@@ -99,6 +94,7 @@ func hash(toHash string, shard int) int {
 	return int(num.Int64())
 }
 
+//used to test messenger shutdown
 func (messenger *Messenger) shutDown() {
 	messenger.M.Leave(time.Duration(1) * time.Second)
 	messenger.M.Shutdown()

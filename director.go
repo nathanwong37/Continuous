@@ -1,6 +1,7 @@
 package temp
 
 import (
+	"fmt"
 	"sort"
 
 	proto "github.com/temp/plugins"
@@ -36,8 +37,12 @@ func (director *Director) UpdateShards(shard map[int]int) {
 	}
 	sort.Ints(shardInt)
 	for index2 < len(shardInt) && index < len(director.managers) {
+		//if... gained shards
+		//else if.. same shards
+		//else... lost shards
 		if shardInt[index2] < director.managers[index].shardID {
 			manager := NewManager(shardInt[index2])
+			//Still need to pull the timers from the database
 			updateManager = append(updateManager, manager)
 			index2++
 		} else if shardInt[index2] == director.managers[index].shardID {
@@ -48,6 +53,7 @@ func (director *Director) UpdateShards(shard map[int]int) {
 		}
 	}
 	for index2 < len(shardInt) {
+		//Still need to pull the timers from the database
 		manager := NewManager(shardInt[index2])
 		updateManager = append(updateManager, manager)
 		index2++
@@ -75,7 +81,10 @@ func (director *Director) CreateTimer(Info *proto.TimerInfo) {
 		}
 		director.managers[index] = manager
 	}
-
+	err := director.managers[index].CreateTimer(Info)
+	if err != nil {
+		fmt.Println("Error creating timer")
+	}
 	//d.managers[index].CreateTimer()
 }
 

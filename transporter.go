@@ -87,11 +87,6 @@ func (transporter *Transport) Create(timerInfo *proto.TimerInfo) (bool, error) {
 		return false, err
 	}
 	defer db.Close()
-	// var query string = insert + " " + into + " timer (" + timerId + "," + shardId + "," + nameSpace + "," + interval +
-	// 	"," + count + "," + startTime + "," + mostRecent + "," + amountFired + ") " + values +
-	// 	"(UUID_TO_BIN( '" + timerInfo.GetTimerID() + "')," + strconv.Itoa(int(timerInfo.GetShardID())) + ", \"" + timerInfo.GetNameSpace() +
-	// 	"\", '" + timerInfo.GetInterval() + "' ," + strconv.Itoa(int(timerInfo.GetCount())) + ", '" + timerInfo.GetStartTime() + "' , '" + timerInfo.GetMostRecent() +
-	// 	"' , " + strconv.Itoa(int(timerInfo.GetAmountFired())) + ");"
 	query := createQueryBuilder(timerInfo)
 	result, err := db.Query(query)
 	if err != nil {
@@ -115,6 +110,24 @@ func (transporter *Transport) Remove(uuid uuid.UUID, namespace string) (bool, er
 	}
 	defer result.Close()
 	return true, nil
+}
+
+//Update should only be used to update RecentTime and AmountFired
+func (transporter *Transport) Update(uuid, recent, namespace string, fired int) (bool, error) {
+	db, err := sql.Open(datab, connect)
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+	var query string = "UPDATE timer Se t" + mostRecent + " = \"" + recent + "\", " + amountFired + " = '" + strconv.Itoa(fired) +
+		"' WHERE timer_id = UUID_TO_BIN(\"" + uuid + "\") AND " + nameSpace + " = \"" + namespace + "\" ;"
+	result, err := db.Query(query)
+	if err != nil {
+		return false, err
+	}
+	defer result.Close()
+	return true, nil
+
 }
 
 //createQueryString helps create the query

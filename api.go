@@ -34,7 +34,6 @@ func (listen *Listener) run(host string) {
 	router.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"message": "Error Not found"})
 	})
-	//local host testing
 	router.Run(host)
 }
 

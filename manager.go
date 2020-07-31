@@ -16,9 +16,11 @@ func NewManager(ID int) *Manager {
 }
 
 //CreateTimer should create a worker to map the timers uuid to
-func (manager *Manager) CreateTimer(Info *proto.TimerInfo) {
+func (manager *Manager) CreateTimer(Info *proto.TimerInfo) error {
 	uuid := Info.GetTimerID()
 	newWork := NewWorker(Info)
 	manager.worker[uuid] = newWork
+	err := newWork.CallBack(Info.GetStartTime(), newWork.RunTimer)
+	return err
 	//newWork.CreateTimer(Info)
 }
