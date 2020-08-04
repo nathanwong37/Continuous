@@ -10,20 +10,21 @@ import (
 
 //Worker struct is used to start and run the timer
 type Worker struct {
+	manager   *Manager
 	TimerInfo *proto.TimerInfo
 	finished  chan bool
 }
 
 //NewWorker is a constructor for worker
-func NewWorker(timerInfo *proto.TimerInfo) *Worker {
+func NewWorker(timerInfo *proto.TimerInfo, mngr *Manager) *Worker {
 	return &Worker{
 		TimerInfo: timerInfo,
+		manager:   mngr,
 	}
 }
 
 //RunTimer is used for the worker to run the timer
-func (worker *Worker) RunTimer() error {
-	var curr int = int(worker.TimerInfo.GetCount())
+func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 	//Set a channel up for delete, or if the timer is finished
 	worker.finished = make(chan bool)
 	seconds, err := parseInterval(worker.TimerInfo.GetInterval())
@@ -31,63 +32,81 @@ func (worker *Worker) RunTimer() error {
 		//Chances of error should be zero... should be authenticated at api
 		fmt.Println("Failed to parse interval")
 	}
-	//dealing with recent time
-	if worker.TimerInfo.GetMostRecent() != "" {
-		t, _ := time.Parse("2006-01-02 15:04:05", worker.TimerInfo.GetMostRecent())
-		for t.Add(time.Duration(seconds)).Before(time.Now()) {
-			t.Add(time.Duration(seconds))
-			curr++
-		}
-		//timer is expired
-		if int32(curr) > worker.TimerInfo.GetCount() && worker.TimerInfo.GetCount() != -1 {
-			return errors.New("Timer is expired")
-
-		}
-		transporter := Transport{}
-		_, err := transporter.Update(worker.TimerInfo.GetTimerID(), worker.TimerInfo.GetMostRecent(), worker.TimerInfo.GetNameSpace(), curr)
-		if err != nil {
-			fmt.Println("Failed to write to database")
-		}
-		time.Sleep(time.Now().Sub(t))
-		curr++
-	}
-	//sleep then run go routine when it is time
-	//start ticker go routine
 	count := int(worker.TimerInfo.GetCount())
-	go func(dur, count, curr int) {
+
+	go func(dur, count, curr int, uuidstr, namespace string, done chan bool, sleep time.Duration, manager *Manager) {
+		time.Sleep(sleep)
 		ticker := time.NewTicker(time.Second * time.Duration(dur))
+		transporter := Transport{}
 		for {
 			select {
-			case <-worker.finished:
+			case <-done:
 				//worker is finished or timer deleted
+				manager.DeleteEntry(uuidstr, namespace)
 				return
 			case fin := <-ticker.C:
 				fmt.Println("tick at", fin)
-				count++
-				if curr >= count {
-					//timer over
+				curr++
+				//update to database... if timer is frequent, space out the write
+				_, errs := transporter.Update(uuidstr, fin.Format("2006-01-02 15:04:05"), namespace, int(curr))
+				if errs != nil {
+					fmt.Println("Failed to update")
+				}
+				//timer over
+				if curr >= count && count != -1 {
+					done <- true
 				}
 
 			}
 
 		}
-	}(seconds, count, curr)
+	}(seconds, count, curr, worker.TimerInfo.GetTimerID(), worker.TimerInfo.GetNameSpace(), worker.finished, sleep, worker.manager)
 	return nil
 
 }
 
 //CallBack is used to start the run timer, when it is appropriate
-func (worker *Worker) CallBack(start string, run func() error) error {
-	t, err := time.Parse("2006-01-02 15:04:05", start)
+func (worker *Worker) CallBack(start string, run func(time.Duration, int) error) error {
+	//timer starts now
+	if start == "" {
+		return run(time.Second*0, 0)
+	}
+
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", start, time.Local)
 	if err != nil {
-		return run()
+		return errors.New("Incorrect format")
 	}
-	if t.Before(time.Now()) {
-		return run()
+	//Timer got picked up, have to sync
+	if t.Before(time.Now().Local()) {
+		curr := worker.TimerInfo.GetAmountFired()
+		seconds, err := parseInterval(worker.TimerInfo.GetInterval())
+		if err != nil {
+			return err
+		}
+		for t.Add(time.Duration(seconds)*time.Second).Before(time.Now().Local()) || (curr > worker.TimerInfo.GetCount() && worker.TimerInfo.GetCount() != -1) {
+			t = t.Add(time.Second * time.Duration(seconds))
+			curr++
+
+			//call whatever happens when a timer
+		}
+		//timer is expired
+		if int32(curr) > worker.TimerInfo.GetCount() && worker.TimerInfo.GetCount() != -1 {
+			//delete from database then return an error
+			worker.manager.remove(worker.TimerInfo.GetTimerID(), worker.TimerInfo.GetNameSpace())
+			return errors.New("Timer has expired")
+		}
+		transporter := Transport{}
+		_, errs := transporter.Update(worker.TimerInfo.GetTimerID(), t.Format("2006-01-02 15:04:05"), worker.TimerInfo.GetNameSpace(), int(curr))
+		if errs != nil {
+			fmt.Println(errs.Error())
+			return errs
+		}
+		curr++
+		return run(time.Now().Local().Sub(t), int(curr))
 	}
-	diff := t.Sub(time.Now())
-	time.Sleep(diff)
-	return run()
+
+	//timer starts later
+	return run(t.Sub(time.Now().Local()), 0)
 }
 
 //ParseInterval parses the string into seconds
@@ -99,4 +118,9 @@ func parseInterval(interval string) (int, error) {
 		return -1, err
 	}
 	return hour*3600 + minute*60 + second, nil
+}
+
+//SendSignal is used to send the signal to worker to stop timer
+func (worker *Worker) SendSignal(done bool) {
+	worker.finished <- done
 }

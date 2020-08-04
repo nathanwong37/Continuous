@@ -19,19 +19,18 @@ func NewDirector() *Director {
 
 //UpdateShards add shards that are owned, and deletes shard no longer in ownership
 //maps are randomized...
-func (director *Director) UpdateShards(shard map[int]int) {
+func (director *Director) UpdateShards(shard map[int]int, cap int) {
 	var index int = 0
 	var index2 int = 0
 	updateManager := make([]*Manager, 0)
 	var shardInt []int
-	//shardInt := make([]int, 0)
 	//populate with the shards we now own
 	for start, end := range shard {
 		for i := start; i < end; i++ {
 			shardInt = append(shardInt, i)
 		}
 		//will think of better way for this
-		if end == 999 {
+		if end == cap-1 {
 			shardInt = append(shardInt, end)
 		}
 	}
@@ -59,6 +58,7 @@ func (director *Director) UpdateShards(shard map[int]int) {
 		index2++
 	}
 	director.managers = updateManager
+	director.PullAllTimers()
 }
 
 //CreateTimer is used to create the timer in director
@@ -85,9 +85,10 @@ func (director *Director) CreateTimer(Info *proto.TimerInfo) {
 	if err != nil {
 		fmt.Println("Error creating timer")
 	}
-	//d.managers[index].CreateTimer()
+	return
 }
 
+//binSearchManager is to search through manager in a binary search
 func binSearchManager(managers []*Manager, low, high, target int) int {
 	if low > high {
 		return -1
@@ -100,4 +101,20 @@ func binSearchManager(managers []*Manager, low, high, target int) int {
 	} else {
 		return binSearchManager(managers, mid+1, high, target)
 	}
+}
+
+//PullAllTimers has the director command all managers to get timers it may have missed from database
+func (director *Director) PullAllTimers() {
+	for i := 0; i < len(director.managers); i++ {
+		director.managers[i].PullAllTimers()
+	}
+}
+
+//DeleteTime should delete the time from the manager
+func (director *Director) DeleteTime(uuidstr, namespace string, shardID int) bool {
+	index := binSearchManager(director.managers, 0, len(director.managers), shardID)
+	if index == -1 {
+		return false
+	}
+	return director.managers[index].DeleteTime(uuidstr)
 }

@@ -2,6 +2,7 @@ package temp
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -103,7 +104,8 @@ func (transporter *Transport) Remove(uuid uuid.UUID, namespace string) (bool, er
 		return false, err
 	}
 	defer db.Close()
-	var query string = remov + " FROM timer " + where + " " + timerId + "= UUID_TO_BIN( '" + uuid.String() + "') AND " + nameSpace + " = \"" + namespace + "\" ;"
+	var query string = "DELETE FROM timer WHERE timer_id = UUID_TO_BIN(\"" + uuid.String() + "\") AND " + nameSpace + " = \"" + namespace + "\""
+	fmt.Println(query)
 	result, err := db.Query(query)
 	if err != nil {
 		return false, err
@@ -119,7 +121,7 @@ func (transporter *Transport) Update(uuid, recent, namespace string, fired int) 
 		return false, err
 	}
 	defer db.Close()
-	var query string = "UPDATE timer Se t" + mostRecent + " = \"" + recent + "\", " + amountFired + " = '" + strconv.Itoa(fired) +
+	var query string = "UPDATE timer Set " + mostRecent + " = \"" + recent + "\", " + amountFired + " = '" + strconv.Itoa(fired) +
 		"' WHERE timer_id = UUID_TO_BIN(\"" + uuid + "\") AND " + nameSpace + " = \"" + namespace + "\" ;"
 	result, err := db.Query(query)
 	if err != nil {
@@ -139,16 +141,41 @@ func createQueryBuilder(timerInfo *proto.TimerInfo) string {
 		"\", '" + timerInfo.GetInterval() + "' ," + strconv.Itoa(int(timerInfo.GetCount())) + ", '"
 	var valid bool = true
 	timerStart := timerInfo.GetStartTime()
-	_, err := time.Parse("2006-01-02 15:04:05", timerStart)
+	now := time.Now()
+	_, err := time.ParseInLocation("2006-01-02 15:04:05", timerStart, time.Local)
 	if err != nil {
 		valid = false
 	}
 	if !valid {
-		now := time.Now()
 		timerStart = now.Format("2006-01-02 15:04:05")
 	}
-	begin = begin + startTime + "," + amountFired
-	end = end + timerStart + "' , " + strconv.Itoa(int(timerInfo.GetAmountFired()))
+	begin = begin + startTime + "," + mostRecent + "," + amountFired
+	end = end + timerStart + "' , '" + now.Format("2006-01-02 15:04:05") + " ' ," + strconv.Itoa(int(timerInfo.GetAmountFired()))
 	result := begin + end + ");"
 	return result
+}
+
+//GetRows returns the rows of data that is read in from the database
+func (transporter *Transport) GetRows(shardId int) ([]*proto.TimerInfo, error) {
+	db, err := sql.Open(datab, connect)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	var query string = "Select * FROM timer WHERE shard_id = " + strconv.Itoa(shardId) + ";"
+	results, err := db.Query(query)
+	timers := make([]*proto.TimerInfo, 0)
+	for results.Next() {
+		info := new(proto.TimerInfo)
+		a := uuid.New()
+		err = results.Scan(&a, &info.ShardID, &info.NameSpace, &info.Interval, &info.Count, &info.StartTime, &info.MostRecent,
+			&info.AmountFired, &info.TimeCreated)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		info.TimerID = a.String()
+		timers = append(timers, info)
+	}
+	return timers, nil
 }

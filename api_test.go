@@ -26,6 +26,7 @@ func TestRun(t *testing.T) {
 	// conf2.AdvertisePort = 2134
 	// test2 := NewMessenger(conf2)
 	// test2.Join(nodes)
+	//	time.Sleep(2 * time.Second)
 	time.Sleep(25 * time.Second)
 
 }

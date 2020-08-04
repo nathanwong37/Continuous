@@ -32,7 +32,8 @@ message CreateJobResponse {
 
 message DeleteJobRequest {
     string timerId = 1;
-    string nameSpace = 3;
+    string nameSpace = 2;
+    int32 shardId = 3;
 }
 
 message DeleteJobResponse {
