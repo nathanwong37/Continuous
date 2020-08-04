@@ -69,7 +69,7 @@ func TestDirector(t *testing.T) {
 	test.Join(nodes)
 	a := test.syncShards()
 	b := NewDirector()
-	b.UpdateShards(a)
+	b.UpdateShards(a, test.shard)
 
 }
 

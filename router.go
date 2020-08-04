@@ -91,7 +91,7 @@ func (m *methodRunner) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error"})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"success": "json Obj"})
+	c.JSON(http.StatusAccepted, gin.H{"success": "Timer Deleted"})
 }
 
 func parseParams(jsn []byte) (params, error) {

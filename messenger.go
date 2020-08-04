@@ -114,15 +114,13 @@ func (messenger *Messenger) ReadFromChannel() {
 			messenger.nodeJoin(event.Node.Address())
 			messenger.lock.Unlock()
 			shards := messenger.syncShards()
-			//now messenger will command director to create shards and do all that
-			messenger.director.UpdateShards(shards)
-			//Need something to sync up the timers
+			messenger.director.UpdateShards(shards, messenger.shard)
 		case 1:
 			messenger.lock.Lock()
 			messenger.nodeLeave(event.Node.Address())
 			messenger.lock.Unlock()
 			shards := messenger.syncShards()
-			messenger.director.UpdateShards(shards)
+			messenger.director.UpdateShards(shards, messenger.shard)
 		case 2:
 			fmt.Println("Something updated")
 		default:
@@ -162,7 +160,7 @@ func (messenger *Messenger) nodeJoin(address string) {
 		//potential fix don't override have both nodes run timers
 		for _, ok := messenger.hashring[ans]; ok; _, ok = messenger.hashring[ans] {
 			ans++
-			if ans > 999 {
+			if ans > messenger.shard-1 {
 				ans = 0
 			}
 		}
@@ -227,4 +225,9 @@ func (messenger *Messenger) CreateTime(timerInfo *proto.TimerInfo) {
 		panic(err)
 	}
 	messenger.director.CreateTimer(timerInfo)
+}
+
+//DeleteTime will be called to tell director to delete the timer
+func (messenger *Messenger) DeleteTime(uuidstr, namespace string, shardid int) bool {
+	return messenger.director.DeleteTime(uuidstr, namespace, shardid)
 }
