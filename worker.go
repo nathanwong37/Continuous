@@ -3,6 +3,7 @@ package temp
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	proto "github.com/temp/plugins"
@@ -37,23 +38,50 @@ func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 	go func(dur, count, curr int, uuidstr, namespace string, done chan bool, sleep time.Duration, manager *Manager) {
 		time.Sleep(sleep)
 		ticker := time.NewTicker(time.Second * time.Duration(dur))
+		var buffer int = 0
+		var pass int = 0
 		transporter := Transport{}
+		fmt.Println("STARTING TIMER ON " + uuidstr)
 		for {
 			select {
-			case <-done:
+			case val := <-done:
 				//worker is finished or timer deleted
-				manager.DeleteEntry(uuidstr, namespace)
+				if val {
+					manager.DeleteEntry(uuidstr, namespace)
+					return
+				}
+				fmt.Println("STOPPING TIMER ON " + uuidstr)
 				return
 			case fin := <-ticker.C:
 				fmt.Println("tick at", fin)
 				curr++
-				//update to database... if timer is frequent, space out the write
-				_, errs := transporter.Update(uuidstr, fin.Format("2006-01-02 15:04:05"), namespace, int(curr))
-				if errs != nil {
-					fmt.Println("Failed to update")
+				if dur <= 5 {
+					pass++
+				} else {
+					pass = buffer
+				}
+				if pass >= buffer {
+					_, errs := transporter.Update(uuidstr, fin.Format("2006-01-02 15:04:05"), namespace, int(curr))
+					if errs != nil {
+						fmt.Println("Failed to update")
+					}
+					pass = 0
+					buffer = int(math.Min(float64(buffer+1), float64(10%dur)))
 				}
 				//timer over
 				if curr >= count && count != -1 {
+					//final update
+					_, errs := transporter.Update(uuidstr, fin.Format("2006-01-02 15:04:05"), namespace, int(curr))
+					if errs != nil {
+						//failed to write, try 3 times then give up, entry will be deleted anyways
+						for i := 0; i < 3; i++ {
+							_, errs := transporter.Update(uuidstr, fin.Format("2006-01-02 15:04:05"), namespace, int(curr))
+							if errs == nil {
+								break
+							}
+							time.Sleep(5 * time.Millisecond)
+						}
+					}
 					done <- true
 				}
 

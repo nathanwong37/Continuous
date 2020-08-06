@@ -40,9 +40,8 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 	conf.Events = &memberlist.ChannelEventDelegate{ch}
 	list, err := memberlist.Create(conf)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
-	//readFromChannel(ch)
 	return &Messenger{
 		M:         list,
 		channel:   ch,
@@ -70,7 +69,7 @@ func (messenger *Messenger) Join(addr []string) int {
 	}
 	l, err := net.Listen("tcp", messenger.M.LocalNode().Address())
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
 	if messenger.server == nil {
 		messenger.server = NewGrpcServer(messenger)
@@ -96,6 +95,7 @@ func hash(toHash string, shard int) int {
 
 //used to test messenger shutdown
 func (messenger *Messenger) shutDown() {
+	messenger.director.StopAllTimers()
 	messenger.M.Leave(time.Duration(1) * time.Second)
 	messenger.M.Shutdown()
 }
@@ -108,7 +108,6 @@ func (messenger *Messenger) ReadFromChannel() {
 		//3 Cases
 		//0. Node Joins
 		//1. Node leaves
-		//2. Node updates
 		case 0:
 			messenger.lock.Lock()
 			messenger.nodeJoin(event.Node.Address())
@@ -121,10 +120,8 @@ func (messenger *Messenger) ReadFromChannel() {
 			messenger.lock.Unlock()
 			shards := messenger.syncShards()
 			messenger.director.UpdateShards(shards, messenger.shard)
-		case 2:
-			fmt.Println("Something updated")
 		default:
-			fmt.Println("Error and default")
+			fmt.Println("Default")
 		}
 	}
 }
@@ -158,6 +155,7 @@ func (messenger *Messenger) nodeJoin(address string) {
 		//Nodes become aware of each other at differnt times, if they hash to the same spot
 		//Both Node will think the other owns the node at ans + 1, so those timers don't run
 		//potential fix don't override have both nodes run timers
+		//Better fix is to probably just increase shard amount... Reduces chance of collision
 		for _, ok := messenger.hashring[ans]; ok; _, ok = messenger.hashring[ans] {
 			ans++
 			if ans > messenger.shard-1 {
@@ -222,7 +220,7 @@ func (messenger *Messenger) GetAddress(timerID string) (address string, shardID 
 func (messenger *Messenger) CreateTime(timerInfo *proto.TimerInfo) {
 	_, err := messenger.transport.Create(timerInfo)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
 	messenger.director.CreateTimer(timerInfo)
 }

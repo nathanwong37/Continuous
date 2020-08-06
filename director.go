@@ -3,6 +3,8 @@ package temp
 import (
 	"fmt"
 	"sort"
+	"sync"
+	"time"
 
 	proto "github.com/temp/plugins"
 )
@@ -10,11 +12,17 @@ import (
 //Director is in charge of Shards, also has to periodically check database
 type Director struct {
 	managers []*Manager
+	lock     *sync.RWMutex
 }
 
 //NewDirector is a constructor to initialize the map
 func NewDirector() *Director {
-	return &Director{managers: make([]*Manager, 0)}
+	direct := &Director{
+		managers: make([]*Manager, 0),
+		lock:     new(sync.RWMutex),
+	}
+	go direct.PeriodicScan()
+	return direct
 }
 
 //UpdateShards add shards that are owned, and deletes shard no longer in ownership
@@ -29,12 +37,13 @@ func (director *Director) UpdateShards(shard map[int]int, cap int) {
 		for i := start; i < end; i++ {
 			shardInt = append(shardInt, i)
 		}
-		//will think of better way for this
 		if end == cap-1 {
 			shardInt = append(shardInt, end)
 		}
 	}
 	sort.Ints(shardInt)
+	director.lock.Lock()
+	defer director.lock.Unlock()
 	for index2 < len(shardInt) && index < len(director.managers) {
 		//if... gained shards
 		//else if.. same shards
@@ -47,7 +56,9 @@ func (director *Director) UpdateShards(shard map[int]int, cap int) {
 		} else if shardInt[index2] == director.managers[index].shardID {
 			updateManager = append(updateManager, director.managers[index])
 			index++
+			index2++
 		} else {
+			director.StopTimer(index)
 			index++
 		}
 	}
@@ -114,7 +125,30 @@ func (director *Director) PullAllTimers() {
 func (director *Director) DeleteTime(uuidstr, namespace string, shardID int) bool {
 	index := binSearchManager(director.managers, 0, len(director.managers), shardID)
 	if index == -1 {
+		//delete request went to wrong node
 		return false
 	}
 	return director.managers[index].DeleteTime(uuidstr)
+}
+
+//StopTimer has the director tell the manager to stop all current timers
+func (director *Director) StopTimer(index int) {
+	director.managers[index].StopAllTimers()
+}
+
+//StopAllTimers stops all the timers in director, should only be called when messenger shutsdowns
+func (director *Director) StopAllTimers() {
+	for index := range director.managers {
+		director.managers[index].StopAllTimers()
+	}
+}
+
+//PeriodicScan should be used to periodically scan for timers, should only be called when director is first created
+func (director *Director) PeriodicScan() {
+	for {
+		time.Sleep(600 * time.Second)
+		director.lock.Lock()
+		director.PullAllTimers()
+		director.lock.Unlock()
+	}
 }

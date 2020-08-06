@@ -4,15 +4,12 @@ import (
 	"net"
 
 	"github.com/gin-gonic/gin"
-	//"github.com/temp/messenger"
-	//"github.com/temp/messenger"
 )
 
+//Listener is used to create a listener
 type Listener struct {
 	messenger *Messenger
 }
-
-//var host string = ":8080"
 
 //NewListener is a constructor for listener
 func NewListener(msnger *Messenger) *Listener {
