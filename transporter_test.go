@@ -57,22 +57,6 @@ func TestCreate(t *testing.T) {
 	work, err := transporter.Create(testTimer)
 	assert.NoError(t, err)
 	assert.Equal(t, work, true)
-	//transporter.Update(testTimer.TimerID, "2020-7-01 12:35:30", "Nathan Wong", 5)
 	transporter.GetRows(344)
-	// validate, err := transporter.Get(uuid.testTimer.GetTimerId(, testTimer.Namespace)
-	// assert.NoError(t, err)
-
-	// assert.Equal(t, testTimer.TimerID, validate.TimerID)
-	// assert.Equal(t, testTimer.ShardID, validate.ShardID)
-	// assert.Equal(t, testTimer.Namespace, validate.Namespace)
-	// assert.Equal(t, testTimer.Interval, validate.Interval)
-	// assert.Equal(t, testTimer.Count, validate.Count)
-	// assert.Equal(t, testTimer.Starttime, validate.Starttime)
-	// assert.Equal(t, testTimer.Mostrecent, validate.Mostrecent)
-	// assert.Equal(t, testTimer.Amountfired, validate.Amountfired)
-
-	// valid, err := transporter.Remove(testTimer.TimerID, testTimer.Namespace)
-	// assert.NoError(t, err)
-	// assert.Equal(t, valid, true)
 
 }

@@ -44,7 +44,7 @@ func (manager *Manager) DeleteEntry(uuidstr, namespace string) {
 	delete(manager.worker, uuidstr)
 }
 
-//Delete tries to delete the entry from the databse
+//remove tries to delete the entry from the databse
 func (manager *Manager) remove(uuidstr, namespace string) {
 	uu, err := uuid.Parse(uuidstr)
 	if err != nil {
@@ -62,9 +62,6 @@ func (manager *Manager) remove(uuidstr, namespace string) {
 
 //PullAllTimers is for manager to pull all the timers it owns from database if it has not done so
 func (manager *Manager) PullAllTimers() {
-	//1. Get all results of shardID
-	//2. If you have to create a new one do so
-	//3. otherwise do nothing
 	transport := new(Transport)
 	timers, err := transport.GetRows(manager.shardID)
 	if err != nil {
@@ -76,7 +73,6 @@ func (manager *Manager) PullAllTimers() {
 		if _, ok := manager.worker[timers[i].GetTimerID()]; ok {
 			continue
 		}
-		//otherwise create... should this be a go routine?
 		manager.CreateTimer(timers[i])
 	}
 }
@@ -97,5 +93,14 @@ func (manager *Manager) DeleteTime(uuidstr string) bool {
 		return false
 	}
 	return true
+}
 
+//StopAllTimers stops all the timers
+func (manager *Manager) StopAllTimers() {
+	if len(manager.worker) == 0 {
+		return
+	}
+	for _, worker := range manager.worker {
+		worker.SendSignal(false)
+	}
 }

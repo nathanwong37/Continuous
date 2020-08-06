@@ -1,4 +1,3 @@
-//Might have to have a messenger be part of the client, blegh
 package temp
 
 import (
@@ -73,11 +72,17 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 }
 
 //DeleteTimer will forward the delete request to the appropriate node, assume param are authenticated
-func (client *Client) DeleteTimer(uuid, namespace string) (int, error) {
-	//so first we want to use the uuid to calculate the address to send
-	//for now we use local host
-	//addr := something.membership.getAddr(uuid)
-	addr, shardResult := client.messenger.GetAddress(uuid)
+func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
+	uu, err := uuid.Parse(uuidstr)
+	if err != nil {
+		return -1, err
+	}
+	//Make sure it is actually in the database
+	_, err = client.messenger.transport.Get(uu, namespace)
+	if err != nil {
+		return -1, err
+	}
+	addr, shardResult := client.messenger.GetAddress(uuidstr)
 	conn, err := client.Connect(addr)
 	if err != nil {
 		return -1, err
@@ -86,7 +91,7 @@ func (client *Client) DeleteTimer(uuid, namespace string) (int, error) {
 
 	c := proto.NewActionsClient(conn)
 	resp, err := c.Delete(context.Background(), &proto.DeleteJobRequest{
-		TimerId:   uuid,
+		TimerId:   uuidstr,
 		NameSpace: namespace,
 		ShardId:   int32(shardResult),
 	})
