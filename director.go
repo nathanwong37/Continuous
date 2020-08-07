@@ -21,6 +21,7 @@ func NewDirector() *Director {
 		managers: make([]*Manager, 0),
 		lock:     new(sync.RWMutex),
 	}
+	//start periodic scanner to pick missed timers due to race conditions
 	go direct.PeriodicScan()
 	return direct
 }
@@ -50,7 +51,6 @@ func (director *Director) UpdateShards(shard map[int]int, cap int) {
 		//else... lost shards
 		if shardInt[index2] < director.managers[index].shardID {
 			manager := NewManager(shardInt[index2])
-			//Still need to pull the timers from the database
 			updateManager = append(updateManager, manager)
 			index2++
 		} else if shardInt[index2] == director.managers[index].shardID {
@@ -63,7 +63,6 @@ func (director *Director) UpdateShards(shard map[int]int, cap int) {
 		}
 	}
 	for index2 < len(shardInt) {
-		//Still need to pull the timers from the database
 		manager := NewManager(shardInt[index2])
 		updateManager = append(updateManager, manager)
 		index2++

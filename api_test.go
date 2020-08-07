@@ -9,18 +9,18 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	conf := memberlist.DefaultLocalConfig()
-	test := NewMessenger(conf)
+	// conf := memberlist.DefaultLocalConfig()
+	// test := NewMessenger(conf)
 	nodes := []string{
 		"localhost:7946",
 	}
-	test.Join(nodes)
-	// conf2 := memberlist.DefaultLocalConfig()
-	// conf2.Name = "NotFeelingLucky"
-	// conf2.BindPort = 2134
-	// conf2.AdvertisePort = 2134
-	// test2 := NewMessenger(conf2)
-	// test2.Join(nodes)
+	// test.Join(nodes)
+	conf2 := memberlist.DefaultLocalConfig()
+	conf2.Name = "NotFeelingLucky"
+	conf2.BindPort = 2134
+	conf2.AdvertisePort = 2134
+	test2 := NewMessenger(conf2)
+	test2.Join(nodes)
 	// time.Sleep(2 * time.Second)
 	// test2.shutDown()
 	// fmt.Println("TEST2 SHUTDOWN")
