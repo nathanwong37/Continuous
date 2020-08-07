@@ -1,6 +1,8 @@
 package temp
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,5 +32,8 @@ func (listen *Listener) run(host string) {
 	router.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"message": "Error Not found"})
 	})
-	router.Run(host)
+	err := router.Run(host)
+	if err != nil {
+		fmt.Println("Socket is in use")
+	}
 }
