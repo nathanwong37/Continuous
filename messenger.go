@@ -57,11 +57,11 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 
 //Join functionality is used to try and join other memberlists
 //Also starts grpc server, client and api
-func (messenger *Messenger) Join(addr []string) int {
+func (messenger *Messenger) Join(addr []string) (int, error) {
 	go messenger.ReadFromChannel()
 	try, err := messenger.M.Join(addr)
 	if err != nil {
-		return -1
+		return -1, err
 	}
 	if messenger.listen == nil {
 		messenger.listen = NewListener(messenger)
@@ -69,7 +69,7 @@ func (messenger *Messenger) Join(addr []string) int {
 	}
 	l, err := net.Listen("tcp", messenger.M.LocalNode().Address())
 	if err != nil {
-		fmt.Println(err.Error())
+		return -1, err
 	}
 	if messenger.server == nil {
 		messenger.server = NewGrpcServer(messenger)
@@ -78,7 +78,7 @@ func (messenger *Messenger) Join(addr []string) int {
 	if messenger.client == nil {
 		messenger.client = NewGrpcClient(nil, messenger)
 	}
-	return try
+	return try, nil
 }
 
 //hash function using sha256
