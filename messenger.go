@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,16 +30,18 @@ type Messenger struct {
 	client    *Client
 	listen    *Listener
 	transport *Transport
+	config    *MessengerConfig
 }
 
 //NewMessenger is a constructor for messenger. It first creates a memberlist of its own, then should attempt to join
-func NewMessenger(conf *memberlist.Config) *Messenger {
+func NewMessenger(conf *MessengerConfig) *Messenger {
 	if conf == nil {
-		conf = memberlist.DefaultLocalConfig()
+		conf = DefaultConfig()
 	}
 	ch := make(chan memberlist.NodeEvent, 3)
-	conf.Events = &memberlist.ChannelEventDelegate{ch}
-	list, err := memberlist.Create(conf)
+	conf.memberConfig.Events = &memberlist.ChannelEventDelegate{ch}
+	//Create memberlist first
+	list, err := memberlist.Create(conf.memberConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -52,6 +55,7 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 		keys:      make([]int, 0, 1000),
 		director:  NewDirector(),
 		transport: new(Transport),
+		config:    conf,
 	}
 }
 
@@ -67,7 +71,7 @@ func (messenger *Messenger) Join(addr []string) (int, error) {
 		messenger.listen = NewListener(messenger)
 		go messenger.listen.run(messenger.M.LocalNode().Addr.String() + ":8080")
 	}
-	l, err := net.Listen("tcp", messenger.M.LocalNode().Addr.String()+":51284")
+	l, err := net.Listen("tcp", messenger.M.LocalNode().Addr.String()+":"+strconv.Itoa(messenger.config.RPCPort))
 	if err != nil {
 		return -1, err
 	}
