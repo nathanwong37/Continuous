@@ -3,6 +3,7 @@ package temp
 import (
 	"context"
 	"errors"
+	"strings"
 
 	//"github.com/temp/messenger"
 	proto "github.com/temp/plugins"
@@ -48,6 +49,8 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 	}
 	timerIDString := timerID.String()
 	addr, shardResult := client.messenger.GetAddress(timerIDString)
+	addr = trimAddress(addr)
+	addr = addr + ":51284"
 	// shardRes := int32(shardResult)
 	conn, err := client.Connect(addr)
 	if err != nil {
@@ -83,6 +86,8 @@ func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
 		return -1, err
 	}
 	addr, shardResult := client.messenger.GetAddress(uuidstr)
+	addr = trimAddress(addr)
+	addr = addr + ":51284"
 	conn, err := client.Connect(addr)
 	if err != nil {
 		return -1, err
@@ -102,4 +107,11 @@ func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
 		return -1, errors.New("Failed to delete")
 	}
 	return 1, nil
+}
+
+func trimAddress(s string) string {
+	if index := strings.Index(s, ":"); index != -1 {
+		return s[:index]
+	}
+	return s
 }

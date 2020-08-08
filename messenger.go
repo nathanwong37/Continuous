@@ -67,7 +67,7 @@ func (messenger *Messenger) Join(addr []string) (int, error) {
 		messenger.listen = NewListener(messenger)
 		go messenger.listen.run(messenger.M.LocalNode().Addr.String() + ":8080")
 	}
-	l, err := net.Listen("tcp", messenger.M.LocalNode().Address())
+	l, err := net.Listen("tcp", messenger.M.LocalNode().Addr.String()+":51284")
 	if err != nil {
 		return -1, err
 	}

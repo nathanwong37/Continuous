@@ -12,10 +12,10 @@ func TestRun(t *testing.T) {
 	// conf := memberlist.DefaultLocalConfig()
 	// test := NewMessenger(conf)
 	nodes := []string{
-		"localhost:7946",
+		"192.168.5.56:8301",
 	}
 	// test.Join(nodes)
-	conf2 := memberlist.DefaultLocalConfig()
+	conf2 := memberlist.DefaultWANConfig()
 	conf2.Name = "NotFeelingLucky"
 	conf2.BindPort = 2134
 	conf2.AdvertisePort = 2134
