@@ -19,6 +19,8 @@ func main() {
 	case "Wide":
 		fmt.Println("Wide area Network Chosen")
 		conf = memberlist.DefaultWANConfig()
+		conf.BindPort = 8301
+		conf.AdvertisePort = 8301
 	case "Personal":
 		fmt.Println("Personal area network chosen")
 		conf = memberlist.DefaultLocalConfig()
