@@ -21,6 +21,7 @@ func main() {
 		conf = memberlist.DefaultWANConfig()
 		conf.BindPort = 8301
 		conf.AdvertisePort = 8301
+		conf.BindAddr = "192.168.5.56"
 	case "Personal":
 		fmt.Println("Personal area network chosen")
 		conf = memberlist.DefaultLocalConfig()
@@ -37,7 +38,8 @@ func main() {
 	messeng := temp.NewMessenger(conf)
 	_, err = messeng.Join(lines)
 	if err != nil {
-		fmt.Println("Error in joining")
+		fmt.Println(err.Error())
+		//os.Exit(8)
 	}
 	done := make(chan bool)
 	go forever()
