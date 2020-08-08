@@ -42,7 +42,7 @@ func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 		var pass int = 0
 		transporter := Transport{}
 		//debugging purposes
-		//fmt.Println("STARTING TIMER ON " + uuidstr)
+		fmt.Println("STARTING TIMER ON " + uuidstr)
 		for {
 			select {
 			case val := <-done:
@@ -52,7 +52,7 @@ func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 					return
 				}
 				//debugging purposes
-				//fmt.Println("STOPPING TIMER ON " + uuidstr)
+				fmt.Println("STOPPING TIMER ON " + uuidstr)
 				return
 			case fin := <-ticker.C:
 				fmt.Println("tick at", fin)

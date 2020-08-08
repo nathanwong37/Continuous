@@ -12,7 +12,7 @@ func TestRun(t *testing.T) {
 	// conf := memberlist.DefaultLocalConfig()
 	// test := NewMessenger(conf)
 	nodes := []string{
-		"localhost:8310",
+		"localhost:8301",
 	}
 	// test.Join(nodes)
 	conf2 := memberlist.DefaultWANConfig()
