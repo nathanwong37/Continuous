@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/memberlist"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGrpcConnectionServer(t *testing.T) {
-	conf := memberlist.DefaultLocalConfig()
+	conf := DefaultConfig()
 	test := NewMessenger(conf)
 	nodes := []string{
 		"localhost:7946",
@@ -24,7 +23,7 @@ func TestGrpcConnectionServer(t *testing.T) {
 
 func TestClientConnection(t *testing.T) {
 	fmt.Println("Testing")
-	conf := memberlist.DefaultLocalConfig()
+	conf := DefaultConfig()
 	test := NewMessenger(conf)
 	client := NewGrpcClient(nil, test)
 	_, err := client.Connect("localhost:4040")

@@ -3,6 +3,7 @@ package temp
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	//"github.com/temp/messenger"
@@ -50,7 +51,7 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 	timerIDString := timerID.String()
 	addr, shardResult := client.messenger.GetAddress(timerIDString)
 	addr = trimAddress(addr)
-	addr = addr + ":51284"
+	addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
 	// shardRes := int32(shardResult)
 	conn, err := client.Connect(addr)
 	if err != nil {
@@ -87,7 +88,7 @@ func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
 	}
 	addr, shardResult := client.messenger.GetAddress(uuidstr)
 	addr = trimAddress(addr)
-	addr = addr + ":51284"
+	addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
 	conn, err := client.Connect(addr)
 	if err != nil {
 		return -1, err
