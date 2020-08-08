@@ -3,7 +3,6 @@ package temp
 import (
 	"context"
 	"net"
-
 	proto "github.com/temp/plugins"
 	"google.golang.org/grpc"
 )
@@ -52,8 +51,6 @@ func (server *GrpcServer) Create(ctx context.Context, createRequest *proto.Creat
 //1.) Tell the messenger what to delete
 //2.) return result of messenger
 func (server *GrpcServer) Delete(ctx context.Context, deleteRequest *proto.DeleteJobRequest) (*proto.DeleteJobResponse, error) {
-	var deleted bool = true
-	//at this point send have messenger deal with this
-	//messenger.delete(deleteRequest.TimerId, deleteRequest.nameSpace)
+	deleted := server.messenger.DeleteTime(deleteRequest.GetTimerId(), deleteRequest.GetNameSpace(), int(deleteRequest.GetShardId()))
 	return &proto.DeleteJobResponse{Deleted: deleted}, nil
 }

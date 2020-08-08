@@ -10,14 +10,7 @@ import (
 	"sync"
 	"time"
 
-	// "google.golang.org/genproto/googleapis/api"
-	// "google.golang.org/genproto/protobuf/api"
-
 	"github.com/hashicorp/memberlist"
-	//HTTPTransport "github.com/temp/api"
-	//"github.com/temp/cogs"
-	//"github.com/temp/grpc"
-	//"github.com/temp/cogs"
 	proto "github.com/temp/plugins"
 )
 
@@ -47,9 +40,8 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 	conf.Events = &memberlist.ChannelEventDelegate{ch}
 	list, err := memberlist.Create(conf)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
-	//readFromChannel(ch)
 	return &Messenger{
 		M:         list,
 		channel:   ch,
@@ -64,11 +56,12 @@ func NewMessenger(conf *memberlist.Config) *Messenger {
 }
 
 //Join functionality is used to try and join other memberlists
-func (messenger *Messenger) Join(addr []string) int {
+//Also starts grpc server, client and api
+func (messenger *Messenger) Join(addr []string) (int, error) {
 	go messenger.ReadFromChannel()
 	try, err := messenger.M.Join(addr)
 	if err != nil {
-		return -1
+		return -1, err
 	}
 	if messenger.listen == nil {
 		messenger.listen = NewListener(messenger)
@@ -76,7 +69,7 @@ func (messenger *Messenger) Join(addr []string) int {
 	}
 	l, err := net.Listen("tcp", messenger.M.LocalNode().Address())
 	if err != nil {
-		panic(err)
+		return -1, err
 	}
 	if messenger.server == nil {
 		messenger.server = NewGrpcServer(messenger)
@@ -85,9 +78,10 @@ func (messenger *Messenger) Join(addr []string) int {
 	if messenger.client == nil {
 		messenger.client = NewGrpcClient(nil, messenger)
 	}
-	return try
+	return try, nil
 }
 
+//hash function using sha256
 func hash(toHash string, shard int) int {
 	hashfunc := sha256.New()
 	hashfunc.Write([]byte(toHash))
@@ -99,7 +93,9 @@ func hash(toHash string, shard int) int {
 	return int(num.Int64())
 }
 
+//used to test messenger shutdown
 func (messenger *Messenger) shutDown() {
+	messenger.director.StopAllTimers()
 	messenger.M.Leave(time.Duration(1) * time.Second)
 	messenger.M.Shutdown()
 }
@@ -112,25 +108,20 @@ func (messenger *Messenger) ReadFromChannel() {
 		//3 Cases
 		//0. Node Joins
 		//1. Node leaves
-		//2. Node updates
 		case 0:
 			messenger.lock.Lock()
 			messenger.nodeJoin(event.Node.Address())
 			messenger.lock.Unlock()
 			shards := messenger.syncShards()
-			//now messenger will command director to create shards and do all that
-			messenger.director.UpdateShards(shards)
-			//Need something to sync up the timers
+			messenger.director.UpdateShards(shards, messenger.shard)
 		case 1:
 			messenger.lock.Lock()
 			messenger.nodeLeave(event.Node.Address())
 			messenger.lock.Unlock()
 			shards := messenger.syncShards()
-			messenger.director.UpdateShards(shards)
-		case 2:
-			fmt.Println("Something updated")
+			messenger.director.UpdateShards(shards, messenger.shard)
 		default:
-			fmt.Println("Error and default")
+			fmt.Println("Default")
 		}
 	}
 }
@@ -164,9 +155,10 @@ func (messenger *Messenger) nodeJoin(address string) {
 		//Nodes become aware of each other at differnt times, if they hash to the same spot
 		//Both Node will think the other owns the node at ans + 1, so those timers don't run
 		//potential fix don't override have both nodes run timers
+		//Better fix is to probably just increase shard amount... Reduces chance of collision
 		for _, ok := messenger.hashring[ans]; ok; _, ok = messenger.hashring[ans] {
 			ans++
-			if ans > 999 {
+			if ans > messenger.shard-1 {
 				ans = 0
 			}
 		}
@@ -228,7 +220,12 @@ func (messenger *Messenger) GetAddress(timerID string) (address string, shardID 
 func (messenger *Messenger) CreateTime(timerInfo *proto.TimerInfo) {
 	_, err := messenger.transport.Create(timerInfo)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
 	messenger.director.CreateTimer(timerInfo)
+}
+
+//DeleteTime will be called to tell director to delete the timer
+func (messenger *Messenger) DeleteTime(uuidstr, namespace string, shardid int) bool {
+	return messenger.director.DeleteTime(uuidstr, namespace, shardid)
 }

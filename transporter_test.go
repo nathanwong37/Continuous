@@ -47,32 +47,16 @@ func TestCreate(t *testing.T) {
 	uuid := uuid.New()
 	testTimer := &proto.TimerInfo{
 		TimerID:     uuid.String(),
-		ShardID:     1,
+		ShardID:     344,
 		NameSpace:   "Nathan Wong",
 		Interval:    "00:00:10",
 		Count:       1,
-		StartTime:   "2020-12-24 14:59:50",
-		MostRecent:  "2020-12-24 14:59:50",
+		StartTime:   "2020-08-03 18:18:50",
 		AmountFired: 0,
 	}
 	work, err := transporter.Create(testTimer)
 	assert.NoError(t, err)
 	assert.Equal(t, work, true)
-
-	// validate, err := transporter.Get(uuid.testTimer.GetTimerId(, testTimer.Namespace)
-	// assert.NoError(t, err)
-
-	// assert.Equal(t, testTimer.TimerID, validate.TimerID)
-	// assert.Equal(t, testTimer.ShardID, validate.ShardID)
-	// assert.Equal(t, testTimer.Namespace, validate.Namespace)
-	// assert.Equal(t, testTimer.Interval, validate.Interval)
-	// assert.Equal(t, testTimer.Count, validate.Count)
-	// assert.Equal(t, testTimer.Starttime, validate.Starttime)
-	// assert.Equal(t, testTimer.Mostrecent, validate.Mostrecent)
-	// assert.Equal(t, testTimer.Amountfired, validate.Amountfired)
-
-	// valid, err := transporter.Remove(testTimer.TimerID, testTimer.Namespace)
-	// assert.NoError(t, err)
-	// assert.Equal(t, valid, true)
+	transporter.GetRows(344)
 
 }

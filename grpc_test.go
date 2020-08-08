@@ -2,13 +2,11 @@ package temp
 
 import (
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/memberlist"
-	//"github.com/temp/messenger"
-	//"github.com/temp/messenger"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGrpcConnectionServer(t *testing.T) {
@@ -18,12 +16,8 @@ func TestGrpcConnectionServer(t *testing.T) {
 		"localhost:7946",
 	}
 	test.Join(nodes)
-	listener, err := net.Listen("tcp", ":4040")
-	if err != nil {
-		panic(err)
-	}
-	server := NewGrpcServer(test)
-	server.Serve(listener)
+	_, err := test.client.CreateTimer(70, "Nathan Wong", "00:00:10", "")
+	require.NoError(t, err)
 	//don't want to close server right away
 	time.Sleep(10 * time.Second)
 }
@@ -37,10 +31,5 @@ func TestClientConnection(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
-	// _, err := client.CreateTimer(5, "Nathan Wong", "00:00:10", "2020")
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 }
