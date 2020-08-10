@@ -9,6 +9,7 @@ i.e address is 1.2.3.4
 1.2.3.4:8080 will be used
 
 Create
+
 POST- address:8080/api/v1/create
 
 
@@ -18,6 +19,7 @@ Success - 201
 }
 
 Delete
+
 DELETE - address:8080/api/v1/:namespace/:uuid
 
 
@@ -27,6 +29,7 @@ Success -202
 }
 
 Get
+
 GET - address:8080/api/v1/:namespace/:uuid
 
 Success -202
