@@ -5,3 +5,27 @@ Run Main.Go, enter what kind of connection (LAN,WAN,LOCAL), then enter a text fi
 
 API
 To call the API it will be the address with port 8080
+i.e address is 1.2.3.4
+1.2.3.4:8080 will be used
+
+Create
+POST- address:8080/api/v1/create
+
+Success - 201
+{
+  UUID: uuid
+}
+
+Delete
+DELETE - address:8080/api/v1/:namespace/:uuid
+Success -202
+{
+  success: Timer Deleted
+}
+
+Get
+GET - address:8080/api/v1/:namespace/:uuid
+Success -202
+{
+  TimerInfo: TimerInfo
+}
