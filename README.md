@@ -19,7 +19,8 @@ Success - 201
 
 Delete
 DELETE - address:8080/api/v1/:namespace/:uuid
-/n
+
+
 Success -202
 {
   success: Timer Deleted
