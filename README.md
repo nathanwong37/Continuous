@@ -5,7 +5,7 @@ Run Main.Go, enter what kind of connection (LAN,WAN,LOCAL), then enter a text fi
 
 API
 To call the API it will be the address with port 8080
-i.e address is 1.2.3.4
+i.e address is 1.2.3.4, 
 1.2.3.4:8080 will be used
 
 Create
