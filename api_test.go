@@ -14,14 +14,14 @@ func TestRun(t *testing.T) {
 	// conf := memberlist.DefaultLocalConfig()
 	// test := NewMessenger(conf)
 	nodes := []string{
-		"192.168.5.56:8301",
+		"localhost:7946",
 	}
 	// test.Join(nodes)
-	conf2 := memberlist.DefaultWANConfig()
+	conf2 := memberlist.DefaultLocalConfig()
 	conf2.Name = "NotFeelingLucky"
 	conf2.BindPort = 2134
 	conf2.AdvertisePort = 2134
-	conf := CustomConfig(conf2)
+	conf := CustomConfig(conf2, true)
 	test2 := NewMessenger(conf)
 	test2.Join(nodes)
 	// time.Sleep(2 * time.Second)
