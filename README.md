@@ -13,6 +13,15 @@ Create
 POST- address:8080/api/v1/create
 
 
+(startTime and Count are optional)
+Body{
+  "namespace": "Name",
+  "interval": "hh:mm:ss",
+  "startTime": "yyyy-mm-dd hh:mm:ss",
+  "count": count
+}
+
+
 Success - 201
 {
   UUID: uuid
