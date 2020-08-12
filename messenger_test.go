@@ -26,13 +26,13 @@ func TestHashFunc(t *testing.T) {
 	conf4.Name = "Test3"
 	conf4.BindPort = 3125
 	conf4.AdvertisePort = 3125
-	test := NewMessenger(CustomConfig(conf3))
+	test := NewMessenger(CustomConfig(conf3, true))
 	test.Join(nodes)
-	test2 := NewMessenger(CustomConfig(conf))
+	test2 := NewMessenger(CustomConfig(conf, true))
 	test2.Join(nodes)
-	test3 := NewMessenger(CustomConfig(conf2))
+	test3 := NewMessenger(CustomConfig(conf2, true))
 	test3.Join(nodes)
-	test4 := NewMessenger(CustomConfig(conf4))
+	test4 := NewMessenger(CustomConfig(conf4, true))
 	test4.Join(nodes)
 	time.Sleep(5 * time.Second)
 	test.printKeys()

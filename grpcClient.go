@@ -50,8 +50,10 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 	}
 	timerIDString := timerID.String()
 	addr, shardResult := client.messenger.GetAddress(timerIDString)
-	addr = trimAddress(addr)
-	addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
+	if !client.messenger.config.LocalConnect {
+		addr = trimAddress(addr)
+		addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
+	}
 	// shardRes := int32(shardResult)
 	conn, err := client.Connect(addr)
 	if err != nil {

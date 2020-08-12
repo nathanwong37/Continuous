@@ -75,6 +75,13 @@ func (messenger *Messenger) Join(addr []string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+	if messenger.config.LocalConnect {
+		l, err = net.Listen("tcp", messenger.M.LocalNode().Address())
+		fmt.Println(messenger.M.LocalNode().Address())
+		if err != nil {
+			return -1, err
+		}
+	}
 	if messenger.server == nil {
 		messenger.server = NewGrpcServer(messenger)
 	}
