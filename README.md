@@ -3,7 +3,7 @@ Project Continuous is a durable, load balancing distributed system that runs tim
 Usage is simple.
 Run Main.Go, enter what kind of connection (LAN,WAN,LOCAL), then enter a text file with known addresses to connect to.
 
-API
+API:
 To call the API it will be the address with port 8080
 i.e address is 1.2.3.4, 
 1.2.3.4:8080 will be used
