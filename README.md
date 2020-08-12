@@ -1,5 +1,5 @@
 # Continuous
-Project Continuous is a durable, load balancing distributed system that runs timers. It is implemented using consistent hashing, gRPC, API, and the SWIM protocol. 
+Project Continuous is a durable, load balancing distributed system that runs timers. It is implemented using consistent hashing, gRPC, SWIM protocol, and has a REST API 
 Usage is simple.
 Run Main.Go, enter what kind of connection (LAN,WAN,LOCAL), then enter a text file with known addresses to connect to.
 
