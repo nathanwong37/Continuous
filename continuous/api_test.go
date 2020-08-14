@@ -1,4 +1,4 @@
-package temp
+package continuous
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	conf "github.com/Continuous/config"
 	"github.com/hashicorp/memberlist"
 )
 
@@ -14,15 +15,16 @@ func TestRun(t *testing.T) {
 	// conf := memberlist.DefaultLocalConfig()
 	// test := NewMessenger(conf)
 	nodes := []string{
-		"localhost:7946",
+		"127.0.0.1:2134",
 	}
 	// test.Join(nodes)
-	conf2 := memberlist.DefaultLocalConfig()
-	conf2.Name = "NotFeelingLucky"
-	conf2.BindPort = 2134
-	conf2.AdvertisePort = 2134
-	conf := CustomConfig(conf2, true)
-	test2 := NewMessenger(conf)
+	config2 := memberlist.DefaultLocalConfig()
+	config2.Name = "NotFeelingLucky"
+	config2.BindAddr = "127.0.0.1"
+	config2.BindPort = 2134
+	config2.AdvertisePort = 2134
+	config := conf.CustomConfig(config2, true)
+	test2 := NewMessenger(config)
 	test2.Join(nodes)
 	// time.Sleep(2 * time.Second)
 	// test2.shutDown()
@@ -33,15 +35,6 @@ func TestRun(t *testing.T) {
 func TestIP(t *testing.T) {
 	a := GetOutboundIP()
 	fmt.Println(a.String())
-}
-
-func (messenge *Messenger) printShard() {
-	for i := range messenge.director.managers {
-		if messenge.director.managers[i].shardID == 489 || messenge.director.managers[i].shardID == 59 {
-			fmt.Println(messenge.M.LocalNode())
-			fmt.Printf("%d\n %d \n", messenge.director.managers[i].shardID, i)
-		}
-	}
 }
 
 func GetOutboundIP() net.IP {

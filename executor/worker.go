@@ -1,4 +1,4 @@
-package temp
+package executor
 
 import (
 	"errors"
@@ -6,7 +6,8 @@ import (
 	"math"
 	"time"
 
-	proto "github.com/temp/plugins"
+	proto "github.com/Continuous/plugins"
+	transport "github.com/Continuous/transporter"
 )
 
 //Worker struct is used to start and run the timer
@@ -32,15 +33,17 @@ func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 	if err != nil {
 		//Chances of error should be zero... should be authenticated at api
 		fmt.Println("Failed to parse interval")
+		return err
 	}
 	count := int(worker.TimerInfo.GetCount())
 
+	//go routine to run timers, runs until curr is eqaul to count, or forever if count = -1
 	go func(dur, count, curr int, uuidstr, namespace string, done chan bool, sleep time.Duration, manager *Manager) {
 		time.Sleep(sleep)
 		ticker := time.NewTicker(time.Second * time.Duration(dur))
-		var buffer int = 0
-		var pass int = 0
-		transporter := Transport{}
+		buffer := 0
+		pass := 0
+		transporter := transport.Transport{}
 		//debugging purposes
 		fmt.Println("STARTING TIMER ON " + uuidstr)
 		for {
@@ -125,7 +128,7 @@ func (worker *Worker) CallBack(start string, run func(time.Duration, int) error)
 			worker.manager.remove(worker.TimerInfo.GetTimerID(), worker.TimerInfo.GetNameSpace())
 			return errors.New("Timer has expired")
 		}
-		transporter := Transport{}
+		transporter := transport.Transport{}
 		_, errs := transporter.Update(worker.TimerInfo.GetTimerID(), t.Format("2006-01-02 15:04:05"), worker.TimerInfo.GetNameSpace(), int(curr))
 		if errs != nil {
 			fmt.Println(errs.Error())
