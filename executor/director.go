@@ -1,4 +1,4 @@
-package temp
+package executor
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	proto "github.com/temp/plugins"
+	proto "github.com/Continuous/plugins"
 )
 
 //Director is in charge of Shards, also has to periodically check database
@@ -18,8 +18,8 @@ type Director struct {
 //NewDirector is a constructor to initialize the map
 func NewDirector() *Director {
 	direct := &Director{
-		managers: make([]*Manager, 0),
-		lock:     new(sync.RWMutex),
+		managers: []*Manager{},
+		lock:     &sync.RWMutex{},
 	}
 	//start periodic scanner to pick missed timers due to race conditions
 	go direct.PeriodicScan()
@@ -29,9 +29,9 @@ func NewDirector() *Director {
 //UpdateShards add shards that are owned, and deletes shard no longer in ownership
 //maps are randomized...
 func (director *Director) UpdateShards(shard map[int]int, cap int) {
-	var index int = 0
-	var index2 int = 0
-	updateManager := make([]*Manager, 0)
+	index := 0
+	index2 := 0
+	var updateManager []*Manager
 	var shardInt []int
 	//populate with the shards we now own
 	for start, end := range shard {

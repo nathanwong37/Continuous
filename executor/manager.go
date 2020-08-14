@@ -1,11 +1,12 @@
-package temp
+package executor
 
 import (
 	"fmt"
 	"time"
 
+	proto "github.com/Continuous/plugins"
+	transport "github.com/Continuous/transporter"
 	"github.com/google/uuid"
-	proto "github.com/temp/plugins"
 )
 
 //Manager struct is used in order to deal with Workers/Timers within the Shard
@@ -17,7 +18,7 @@ type Manager struct {
 
 //NewManager is a constructor for Manager
 func NewManager(ID int) *Manager {
-	return &Manager{shardID: ID, worker: make(map[string]*Worker)}
+	return &Manager{shardID: ID, worker: map[string]*Worker{}}
 }
 
 //CreateTimer should create a worker to map the timers uuid to
@@ -50,7 +51,7 @@ func (manager *Manager) remove(uuidstr, namespace string) {
 	if err != nil {
 		return
 	}
-	transporter := Transport{}
+	transporter := transport.Transport{}
 	res, errs := transporter.Remove(uu, namespace)
 	if errs != nil {
 		return
@@ -62,7 +63,7 @@ func (manager *Manager) remove(uuidstr, namespace string) {
 
 //PullAllTimers is for manager to pull all the timers it owns from database if it has not done so
 func (manager *Manager) PullAllTimers() {
-	transport := new(Transport)
+	transport := transport.Transport{}
 	timers, err := transport.GetRows(manager.shardID)
 	if err != nil {
 		fmt.Println("Failed to get rows")
@@ -80,7 +81,7 @@ func (manager *Manager) PullAllTimers() {
 //DeleteTime will send the stop signal to the go routine
 func (manager *Manager) DeleteTime(uuidstr string) bool {
 	manager.worker[uuidstr].SendSignal(true)
-	var count int = 0
+	count := 0
 	for count <= 3 {
 		if _, ok := manager.worker[uuidstr]; ok {
 			count++

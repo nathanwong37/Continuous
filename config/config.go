@@ -7,7 +7,7 @@ import (
 //MessengerConfig are configurations for messenger
 type MessengerConfig struct {
 	//memberlist config, has advertising port/ address and bind port / address
-	memberConfig *memberlist.Config
+	MemberConfig *memberlist.Config
 
 	//Specific port that the RPC should listen on
 	RPCPort int
@@ -24,7 +24,7 @@ const (
 //DefaultConfig returns a config pointer with default settings
 func DefaultConfig() *MessengerConfig {
 	return &MessengerConfig{
-		memberConfig: memberlist.DefaultLocalConfig(),
+		MemberConfig: memberlist.DefaultLocalConfig(),
 		RPCPort:      DefaultRPCPort,
 		LocalConnect: false,
 	}
@@ -33,7 +33,7 @@ func DefaultConfig() *MessengerConfig {
 //DefaultWANConfig returns a config pointer with WAN default settings
 func DefaultWANConfig() *MessengerConfig {
 	return &MessengerConfig{
-		memberConfig: memberlist.DefaultWANConfig(),
+		MemberConfig: memberlist.DefaultWANConfig(),
 		RPCPort:      DefaultRPCPort,
 		LocalConnect: false,
 	}
@@ -42,7 +42,7 @@ func DefaultWANConfig() *MessengerConfig {
 //DefaultLANConfig returns a config pointer with default LAN settings
 func DefaultLANConfig() *MessengerConfig {
 	return &MessengerConfig{
-		memberConfig: memberlist.DefaultLANConfig(),
+		MemberConfig: memberlist.DefaultLANConfig(),
 		RPCPort:      DefaultRPCPort,
 		LocalConnect: false,
 	}
@@ -54,7 +54,7 @@ func CustomConfig(config *memberlist.Config, isLocal bool) *MessengerConfig {
 		config = memberlist.DefaultLocalConfig()
 	}
 	return &MessengerConfig{
-		memberConfig: config,
+		MemberConfig: config,
 		RPCPort:      DefaultRPCPort,
 		LocalConnect: isLocal,
 	}

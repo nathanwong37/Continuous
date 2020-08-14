@@ -1,4 +1,4 @@
-package temp
+package continuous
 
 import (
 	"crypto/sha256"
@@ -11,8 +11,11 @@ import (
 	"sync"
 	"time"
 
+	conf "github.com/Continuous/config"
+	executor "github.com/Continuous/executor"
+	proto "github.com/Continuous/plugins"
+	transport "github.com/Continuous/transporter"
 	"github.com/hashicorp/memberlist"
-	proto "github.com/temp/plugins"
 )
 
 //Messenger contains memberlist, shard amount and partition amount for the members
@@ -25,37 +28,37 @@ type Messenger struct {
 	lock      *sync.RWMutex
 	keys      []int
 
-	director  *Director
-	server    *GrpcServer
-	client    *Client
-	listen    *Listener
-	transport *Transport
-	config    *MessengerConfig
+	director    *executor.Director
+	server      *GrpcServer
+	client      *GrpcClient
+	listen      *Listener
+	transporter *transport.Transport
+	config      *conf.MessengerConfig
 }
 
 //NewMessenger is a constructor for messenger. It first creates a memberlist of its own, then should attempt to join
-func NewMessenger(conf *MessengerConfig) *Messenger {
-	if conf == nil {
-		conf = DefaultConfig()
+func NewMessenger(config *conf.MessengerConfig) *Messenger {
+	if config == nil {
+		config = conf.DefaultConfig()
 	}
 	ch := make(chan memberlist.NodeEvent, 3)
-	conf.memberConfig.Events = &memberlist.ChannelEventDelegate{ch}
+	config.MemberConfig.Events = &memberlist.ChannelEventDelegate{ch}
 	//Create memberlist first
-	list, err := memberlist.Create(conf.memberConfig)
+	list, err := memberlist.Create(config.MemberConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	return &Messenger{
-		M:         list,
-		channel:   ch,
-		shard:     1000,
-		partition: 10,
-		hashring:  make(map[int]string),
-		lock:      new(sync.RWMutex),
-		keys:      make([]int, 0, 1000),
-		director:  NewDirector(),
-		transport: new(Transport),
-		config:    conf,
+		M:           list,
+		channel:     ch,
+		shard:       1000,
+		partition:   10,
+		hashring:    map[int]string{},
+		lock:        &sync.RWMutex{},
+		keys:        []int{},
+		director:    executor.NewDirector(),
+		transporter: &transport.Transport{},
+		config:      config,
 	}
 }
 
@@ -96,9 +99,9 @@ func (messenger *Messenger) Join(addr []string) (int, error) {
 func hash(toHash string, shard int) int {
 	hashfunc := sha256.New()
 	hashfunc.Write([]byte(toHash))
-	num := new(big.Int)
+	num := &big.Int{}
 	num.SetBytes(hashfunc.Sum(nil))
-	shardAmt := new(big.Int)
+	shardAmt := &big.Int{}
 	shardAmt.SetInt64(int64(shard))
 	num = num.Mod(num, shardAmt)
 	return int(num.Int64())
@@ -116,7 +119,7 @@ func (messenger *Messenger) ReadFromChannel() {
 	for {
 		event := <-messenger.channel
 		switch ok := event.Event; ok {
-		//3 Cases
+		//2 Cases
 		//0. Node Joins
 		//1. Node leaves
 		case 0:
@@ -139,8 +142,9 @@ func (messenger *Messenger) ReadFromChannel() {
 
 //gives a map of the starting and ending points of the shards this node owns
 func (messenger *Messenger) syncShards() map[int]int {
-	shards := make(map[int]int)
+	shards := map[int]int{}
 	messenger.lock.Lock()
+	defer messenger.lock.Unlock()
 	for key := 1; key < len(messenger.keys); key++ {
 		if strings.EqualFold(messenger.hashring[messenger.keys[key-1]], messenger.M.LocalNode().Address()) {
 			if key-1 == 0 {
@@ -154,7 +158,6 @@ func (messenger *Messenger) syncShards() map[int]int {
 			}
 		}
 	}
-	messenger.lock.Unlock()
 	return shards
 }
 
@@ -229,7 +232,7 @@ func (messenger *Messenger) GetAddress(timerID string) (address string, shardID 
 
 //CreateTime will be called to tell director to fire up the timer
 func (messenger *Messenger) CreateTime(timerInfo *proto.TimerInfo) {
-	_, err := messenger.transport.Create(timerInfo)
+	_, err := messenger.transporter.Create(timerInfo)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

@@ -1,4 +1,4 @@
-package temp
+package continuous
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	//"github.com/temp/messenger"
-	proto "github.com/temp/plugins"
+	proto "github.com/Continuous/plugins"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -84,7 +84,7 @@ func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
 		return -1, err
 	}
 	//Make sure it is actually in the database
-	_, err = client.messenger.transport.Get(uu, namespace)
+	_, err = client.messenger.transporter.Get(uu, namespace)
 	if err != nil {
 		return -1, err
 	}

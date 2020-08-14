@@ -1,16 +1,17 @@
-package temp
+package continuous
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
+	conf "github.com/Continuous/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGrpcConnectionServer(t *testing.T) {
-	conf := DefaultConfig()
-	test := NewMessenger(conf)
+	config := conf.DefaultConfig()
+	test := NewMessenger(config)
 	nodes := []string{
 		"localhost:7946",
 	}
@@ -23,8 +24,8 @@ func TestGrpcConnectionServer(t *testing.T) {
 
 func TestClientConnection(t *testing.T) {
 	fmt.Println("Testing")
-	conf := DefaultConfig()
-	test := NewMessenger(conf)
+	config := conf.DefaultConfig()
+	test := NewMessenger(config)
 	client := NewGrpcClient(nil, test)
 	_, err := client.Connect("localhost:4040")
 	if err != nil {

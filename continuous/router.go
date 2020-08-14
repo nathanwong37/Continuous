@@ -1,4 +1,4 @@
-package temp
+package continuous
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	transport "github.com/Continuous/transporter"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -65,7 +66,7 @@ func (m *MethodRunner) Create(c *gin.Context) {
 //Get just has to get the information from database, needs to be a json obj
 //Todo: Need to add authentication on get
 func (m *MethodRunner) Get(c *gin.Context) {
-	service := new(Transport)
+	transporter := transport.Transport{}
 	userID := c.Params.ByName("userid")
 	personalUUID := c.Params.ByName("uuid")
 	er := m.AuthenticateParams(userID, "00:00:10", "", personalUUID, -1)
@@ -78,7 +79,7 @@ func (m *MethodRunner) Get(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Error parsing"})
 		return
 	}
-	body, err := service.Get(uuid, userID)
+	body, err := transporter.Get(uuid, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Error getting"})
 		return

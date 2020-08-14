@@ -1,9 +1,10 @@
-package temp
+package continuous
 
 import (
 	"context"
 	"net"
-	proto "github.com/temp/plugins"
+
+	proto "github.com/Continuous/plugins"
 	"google.golang.org/grpc"
 )
 
