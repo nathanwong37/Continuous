@@ -18,7 +18,7 @@ type Manager struct {
 
 //NewManager is a constructor for Manager
 func NewManager(ID int) *Manager {
-	return &Manager{shardID: ID, worker: make(map[string]*Worker)}
+	return &Manager{shardID: ID, worker: map[string]*Worker{}}
 }
 
 //CreateTimer should create a worker to map the timers uuid to
@@ -81,7 +81,7 @@ func (manager *Manager) PullAllTimers() {
 //DeleteTime will send the stop signal to the go routine
 func (manager *Manager) DeleteTime(uuidstr string) bool {
 	manager.worker[uuidstr].SendSignal(true)
-	var count int = 0
+	count := 0
 	for count <= 3 {
 		if _, ok := manager.worker[uuidstr]; ok {
 			count++

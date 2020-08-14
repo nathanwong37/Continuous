@@ -33,14 +33,16 @@ func (worker *Worker) RunTimer(sleep time.Duration, curr int) error {
 	if err != nil {
 		//Chances of error should be zero... should be authenticated at api
 		fmt.Println("Failed to parse interval")
+		return err
 	}
 	count := int(worker.TimerInfo.GetCount())
 
+	//go routine to run timers, runs until curr is eqaul to count, or forever if count = -1
 	go func(dur, count, curr int, uuidstr, namespace string, done chan bool, sleep time.Duration, manager *Manager) {
 		time.Sleep(sleep)
 		ticker := time.NewTicker(time.Second * time.Duration(dur))
-		var buffer int = 0
-		var pass int = 0
+		buffer := 0
+		pass := 0
 		transporter := transport.Transport{}
 		//debugging purposes
 		fmt.Println("STARTING TIMER ON " + uuidstr)

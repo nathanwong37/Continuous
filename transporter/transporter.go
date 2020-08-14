@@ -1,32 +1,23 @@
-package Continuous
+package transporter
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	//need for driver
 	proto "github.com/Continuous/plugins"
-	_ "github.com/go-sql-driver/mysql"
+	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+
+	//Need to run sqldriver
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var datab = "mysql"
 var connect = "test1:test@tcp(192.168.5.56:3306)/timer"
-var insert = "INSERT"
-var remov = "DELETE"
-var where = "WHERE"
-var timerId = "timer_id"
-var shardId = "shard_id"
-var nameSpace = "namespace"
-var interval = "interval_"
-var count = "count"
-var startTime = "start_time"
-var mostRecent = "most_recent"
-var amountFired = "amount_fired"
-var values = "VALUES"
-var into = "INTO"
+var databName = "timer"
 
 //Transport struct just to call methods
 type Transport struct{}
@@ -64,7 +55,15 @@ func (transporter *Transport) Get(uuid uuid.UUID, namespace string) (*RetTimerIn
 		return nil, err
 	}
 	defer db.Close()
-	var query string = "SELECT * FROM timer WHERE timer_id = UUID_TO_BIN(\"" + uuid.String() + "\") AND " + nameSpace + " = \"" + namespace + "\" ;"
+	uuidstr := uuid.String()
+	parameter := &proto.TimerInfo{
+		TimerID:   uuidstr,
+		NameSpace: namespace,
+	}
+	query, err := transporter.BuildQuery(databName, "get", parameter)
+	if err != nil {
+		return nil, err
+	}
 	results := db.QueryRow(query)
 
 	var timerInfo RetTimerInfo
@@ -84,7 +83,20 @@ func (transporter *Transport) Create(timerInfo *proto.TimerInfo) (bool, error) {
 		return false, err
 	}
 	defer db.Close()
-	query := createQueryBuilder(timerInfo)
+	timerInfo.MostRecent = time.Now().Format("2006-01-02 15:04:05")
+	timerStart := timerInfo.GetStartTime()
+	valid := true
+	_, err = time.ParseInLocation("2006-01-02 15:04:05", timerStart, time.Local)
+	if err != nil {
+		valid = false
+	}
+	if !valid {
+		timerInfo.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	}
+	query, err := transporter.BuildQuery(databName, "create", timerInfo)
+	if err != nil {
+		return false, err
+	}
 	result, err := db.Query(query)
 	if err != nil {
 		return false, err
@@ -100,7 +112,15 @@ func (transporter *Transport) Remove(uuid uuid.UUID, namespace string) (bool, er
 		return false, err
 	}
 	defer db.Close()
-	var query string = "DELETE FROM timer WHERE timer_id = UUID_TO_BIN(\"" + uuid.String() + "\") AND " + nameSpace + " = \"" + namespace + "\""
+	uuidstr := uuid.String()
+	parameter := &proto.TimerInfo{
+		TimerID:   uuidstr,
+		NameSpace: namespace,
+	}
+	query, err := transporter.BuildQuery(databName, "remove", parameter)
+	if err != nil {
+		return false, err
+	}
 	result, err := db.Query(query)
 	if err != nil {
 		return false, err
@@ -116,8 +136,13 @@ func (transporter *Transport) Update(uuid, recent, namespace string, fired int) 
 		return false, err
 	}
 	defer db.Close()
-	var query string = "UPDATE timer Set " + mostRecent + " = \"" + recent + "\", " + amountFired + " = '" + strconv.Itoa(fired) +
-		"' WHERE timer_id = UUID_TO_BIN(\"" + uuid + "\") AND " + nameSpace + " = \"" + namespace + "\" ;"
+	parameter := &proto.TimerInfo{
+		TimerID:     uuid,
+		NameSpace:   namespace,
+		MostRecent:  recent,
+		AmountFired: int32(fired),
+	}
+	query, err := transporter.BuildQuery(databName, "update", parameter)
 	result, err := db.Query(query)
 	if err != nil {
 		return false, err
@@ -127,29 +152,6 @@ func (transporter *Transport) Update(uuid, recent, namespace string, fired int) 
 
 }
 
-//createQueryString helps create the query
-func createQueryBuilder(timerInfo *proto.TimerInfo) string {
-	var begin, end string
-	//know for sure every timer has a uuid, shardId,namesapce, and count
-	begin = insert + " " + into + " timer (" + timerId + "," + shardId + "," + nameSpace + "," + interval + "," + count + ","
-	end = ") " + values + "(UUID_TO_BIN( '" + timerInfo.GetTimerID() + "')," + strconv.Itoa(int(timerInfo.GetShardID())) + ", \"" + timerInfo.GetNameSpace() +
-		"\", '" + timerInfo.GetInterval() + "' ," + strconv.Itoa(int(timerInfo.GetCount())) + ", '"
-	var valid bool = true
-	timerStart := timerInfo.GetStartTime()
-	now := time.Now()
-	_, err := time.ParseInLocation("2006-01-02 15:04:05", timerStart, time.Local)
-	if err != nil {
-		valid = false
-	}
-	if !valid {
-		timerStart = now.Format("2006-01-02 15:04:05")
-	}
-	begin = begin + startTime + "," + mostRecent + "," + amountFired
-	end = end + timerStart + "' , '" + now.Format("2006-01-02 15:04:05") + " ' ," + strconv.Itoa(int(timerInfo.GetAmountFired()))
-	result := begin + end + ");"
-	return result
-}
-
 //GetRows returns the rows of data that is read in from the database
 func (transporter *Transport) GetRows(shardID int) ([]*proto.TimerInfo, error) {
 	db, err := sql.Open(datab, connect)
@@ -157,7 +159,10 @@ func (transporter *Transport) GetRows(shardID int) ([]*proto.TimerInfo, error) {
 		return nil, err
 	}
 	defer db.Close()
-	var query string = "Select * FROM timer WHERE shard_id = " + strconv.Itoa(shardID) + ";"
+	parameter := &proto.TimerInfo{
+		ShardID: int32(shardID),
+	}
+	query, err := transporter.BuildQuery(databName, "getRow", parameter)
 	results, err := db.Query(query)
 	timers := make([]*proto.TimerInfo, 0)
 	for results.Next() {
@@ -173,4 +178,55 @@ func (transporter *Transport) GetRows(shardID int) ([]*proto.TimerInfo, error) {
 		timers = append(timers, info)
 	}
 	return timers, nil
+}
+
+//BuildQuery is used to build queries
+func (transporter *Transport) BuildQuery(database, command string, parameter *proto.TimerInfo) (string, error) {
+	sql := ""
+	dialect := goqu.Dialect("mysql")
+	switch command {
+	case "get":
+		sql, _, _ = dialect.From(database).Where(goqu.Ex{
+			"timer_id":  "",
+			"namespace": parameter.GetNameSpace(),
+		}).ToSQL()
+		sql = addUUIDGetRem(sql, parameter.GetTimerID())
+	case "getRow":
+		sql, _, _ = dialect.From(database).Where(goqu.Ex{
+			"shard_id": int(parameter.GetShardID()),
+		}).ToSQL()
+	case "create":
+		create := dialect.Insert(database).Rows(
+			goqu.Record{"timer_id": "", "shard_id": int(parameter.GetShardID()), "namespace": parameter.GetNameSpace(), "interval_": parameter.GetInterval(), "count": int(parameter.GetCount()), "start_time": parameter.GetStartTime(),
+				"most_recent": parameter.GetMostRecent(), "amount_fired": parameter.GetAmountFired()},
+		)
+		sql, _, _ = create.ToSQL()
+		sql = addUUID(sql, parameter.GetTimerID())
+
+	case "remove":
+		ds := dialect.Delete(database).Where(goqu.C("namespace").Eq(parameter.GetNameSpace()), goqu.C("timer_id").Eq(""))
+		sql, _, _ = ds.ToSQL()
+		sql = addUUIDGetRem(sql, parameter.GetTimerID())
+	case "update":
+		ds := dialect.Update(database).Where(goqu.C("namespace").Eq(parameter.GetNameSpace()), goqu.C("timer_id").Eq("")).Set(
+			goqu.Record{"most_recent": parameter.GetMostRecent(), "amount_fired": parameter.GetAmountFired()},
+		)
+		sql, _, _ = ds.ToSQL()
+		sql = addUUIDGetRem(sql, parameter.GetTimerID())
+	default:
+		return sql, errors.New("Improper Command")
+	}
+	return sql, nil
+}
+
+func addUUID(sql string, uuidstr string) string {
+	sql = (string)([]rune(sql)[:len(sql)-3])
+	sql = sql + "UUID_TO_BIN( '" + uuidstr + "'))"
+	return sql
+}
+
+func addUUIDGetRem(sql string, uuidstr string) string {
+	sql = (string)([]rune(sql)[:len(sql)-4])
+	sql = sql + "UUID_TO_BIN( '" + uuidstr + "')))"
+	return sql
 }

@@ -6,35 +6,33 @@ import (
 	"strconv"
 	"strings"
 
-	//"github.com/temp/messenger"
 	proto "github.com/Continuous/plugins"
-
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
-//Client is for dial options, as well as to use important methods
-type Client struct {
+//GrpcClient is for dial options, as well as to use important methods
+type GrpcClient struct {
 	dialOption []grpc.DialOption
 	messenger  *Messenger
 }
 
 //NewGrpcClient is a Constructor that returns a new instance of grpc client
-func NewGrpcClient(dialOpt grpc.DialOption, mess *Messenger) *Client {
+func NewGrpcClient(dialOpt grpc.DialOption, messenger *Messenger) *GrpcClient {
 	if dialOpt == nil {
 		dialOpt = grpc.WithInsecure()
 	}
-	return &Client{
+	return &GrpcClient{
 		dialOption: []grpc.DialOption{
 			dialOpt,
 			grpc.WithBlock(),
 		},
-		messenger: mess,
+		messenger: messenger,
 	}
 }
 
 //Connect function connects the client to a server
-func (client *Client) Connect(addr string) (*grpc.ClientConn, error) {
+func (client *GrpcClient) Connect(addr string) (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(addr, client.dialOption...)
 	if err != nil {
 		return nil, err
@@ -43,7 +41,7 @@ func (client *Client) Connect(addr string) (*grpc.ClientConn, error) {
 }
 
 //CreateTimer will forward the create request to the appropriate node
-func (client *Client) CreateTimer(count int32, namespace, interval, startTime string) (string, error) {
+func (client *GrpcClient) CreateTimer(count int32, namespace, interval, startTime string) (string, error) {
 	timerID, err := uuid.NewUUID()
 	if err != nil {
 		return "", err
@@ -78,7 +76,7 @@ func (client *Client) CreateTimer(count int32, namespace, interval, startTime st
 }
 
 //DeleteTimer will forward the delete request to the appropriate node, assume param are authenticated
-func (client *Client) DeleteTimer(uuidstr, namespace string) (int, error) {
+func (client *GrpcClient) DeleteTimer(uuidstr, namespace string) (int, error) {
 	uu, err := uuid.Parse(uuidstr)
 	if err != nil {
 		return -1, err

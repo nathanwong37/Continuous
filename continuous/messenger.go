@@ -30,7 +30,7 @@ type Messenger struct {
 
 	director    *executor.Director
 	server      *GrpcServer
-	client      *Client
+	client      *GrpcClient
 	listen      *Listener
 	transporter *transport.Transport
 	config      *conf.MessengerConfig
@@ -53,9 +53,9 @@ func NewMessenger(config *conf.MessengerConfig) *Messenger {
 		channel:     ch,
 		shard:       1000,
 		partition:   10,
-		hashring:    make(map[int]string),
-		lock:        new(sync.RWMutex),
-		keys:        make([]int, 0, 1000),
+		hashring:    map[int]string{},
+		lock:        &sync.RWMutex{},
+		keys:        []int{},
 		director:    executor.NewDirector(),
 		transporter: &transport.Transport{},
 		config:      config,
@@ -99,9 +99,9 @@ func (messenger *Messenger) Join(addr []string) (int, error) {
 func hash(toHash string, shard int) int {
 	hashfunc := sha256.New()
 	hashfunc.Write([]byte(toHash))
-	num := new(big.Int)
+	num := &big.Int{}
 	num.SetBytes(hashfunc.Sum(nil))
-	shardAmt := new(big.Int)
+	shardAmt := &big.Int{}
 	shardAmt.SetInt64(int64(shard))
 	num = num.Mod(num, shardAmt)
 	return int(num.Int64())
@@ -119,7 +119,7 @@ func (messenger *Messenger) ReadFromChannel() {
 	for {
 		event := <-messenger.channel
 		switch ok := event.Event; ok {
-		//3 Cases
+		//2 Cases
 		//0. Node Joins
 		//1. Node leaves
 		case 0:
@@ -142,8 +142,9 @@ func (messenger *Messenger) ReadFromChannel() {
 
 //gives a map of the starting and ending points of the shards this node owns
 func (messenger *Messenger) syncShards() map[int]int {
-	shards := make(map[int]int)
+	shards := map[int]int{}
 	messenger.lock.Lock()
+	defer messenger.lock.Unlock()
 	for key := 1; key < len(messenger.keys); key++ {
 		if strings.EqualFold(messenger.hashring[messenger.keys[key-1]], messenger.M.LocalNode().Address()) {
 			if key-1 == 0 {
@@ -157,7 +158,6 @@ func (messenger *Messenger) syncShards() map[int]int {
 			}
 		}
 	}
-	messenger.lock.Unlock()
 	return shards
 }
 

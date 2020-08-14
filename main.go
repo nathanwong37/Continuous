@@ -8,7 +8,8 @@ import (
 	"os"
 	"time"
 
-	temp "github.com/Continuous"
+	conf "github.com/Continuous/config"
+	continuous "github.com/Continuous/continuous"
 	"github.com/hashicorp/memberlist"
 )
 
@@ -57,11 +58,11 @@ func getOutboundIP() net.IP {
 }
 
 //startMain creates and joins the messenger, default port for WAN is 8301, while default port for LAN is 8300
-func startMain() *temp.Messenger {
+func startMain() *continuous.Messenger {
 	fmt.Println("Welcome to Temp Name, please enter your configuration \n 1. Local \n 2. Wide \n 3. Personal \n (Default is Local)")
 	var input string
 	fmt.Scanln(&input)
-	var conf *temp.MessengerConfig
+	var msngerConfig *conf.MessengerConfig
 	switch input {
 	case "Wide":
 		fmt.Println("Wide area Network Chosen")
@@ -70,7 +71,7 @@ func startMain() *temp.Messenger {
 		config.AdvertisePort = 8301
 		addr := getOutboundIP()
 		config.BindAddr = addr.String()
-		conf = temp.CustomConfig(config, false)
+		msngerConfig = conf.CustomConfig(config, false)
 		fmt.Println("Port number is 8301")
 	case "Personal":
 		fmt.Println("Personal area network chosen")
@@ -83,7 +84,7 @@ func startMain() *temp.Messenger {
 		fmt.Scanln(&port)
 		config.BindPort = port
 		config.AdvertisePort = port
-		conf = temp.CustomConfig(config, true)
+		msngerConfig = conf.CustomConfig(config, false)
 	default:
 		fmt.Println("Local Area Network chosen")
 		config := memberlist.DefaultLANConfig()
@@ -91,7 +92,7 @@ func startMain() *temp.Messenger {
 		config.AdvertisePort = 8300
 		addr := getOutboundIP()
 		config.BindAddr = addr.String()
-		conf = temp.CustomConfig(config, false)
+		msngerConfig = conf.CustomConfig(config, false)
 		fmt.Println("Port number is 8300")
 	}
 	fmt.Println("Please enter a text file with nodes to connect to")
@@ -100,7 +101,7 @@ func startMain() *temp.Messenger {
 	if err != nil {
 		panic(err)
 	}
-	messeng := temp.NewMessenger(conf)
+	messeng := continuous.NewMessenger(msngerConfig)
 	_, err = messeng.Join(lines)
 	if err != nil {
 		fmt.Println(err.Error())

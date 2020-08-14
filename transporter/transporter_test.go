@@ -1,4 +1,4 @@
-package Continuous
+package transporter
 
 import (
 	"testing"
@@ -43,7 +43,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	transporter := new(Transport)
+	transporter := &Transport{}
 	uuid := uuid.New()
 	testTimer := &proto.TimerInfo{
 		TimerID:     uuid.String(),
@@ -58,5 +58,35 @@ func TestCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, work, true)
 	transporter.GetRows(344)
+
+}
+
+func TestBuildQuery(t *testing.T) {
+	transporter := &Transport{}
+	testTimer := &proto.TimerInfo{
+		TimerID:     "716c21b9-0044-4527-8d20-a54c6b8e35fb",
+		ShardID:     344,
+		NameSpace:   "Nathan Wong",
+		Interval:    "00:00:10",
+		Count:       1,
+		StartTime:   "2020-08-03 18:18:50",
+		MostRecent:  "2020-08-03 18:18:50",
+		AmountFired: 0,
+	}
+	// a, err := transporter.BuildQuery("timer", "delete", testTimer)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	uu, _ := uuid.Parse(testTimer.TimerID)
+	_, err := transporter.Create(testTimer)
+	assert.NoError(t, err)
+	_, err = transporter.Get(uu, testTimer.NameSpace)
+	assert.NoError(t, err)
+	_, err = transporter.GetRows(int(testTimer.ShardID))
+	assert.NoError(t, err)
+	_, err = transporter.Update(testTimer.TimerID, testTimer.MostRecent, testTimer.NameSpace, 2)
+	assert.NoError(t, err)
+	_, err = transporter.Remove(uu, testTimer.NameSpace)
+	assert.NoError(t, err)
 
 }
