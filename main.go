@@ -59,7 +59,7 @@ func getOutboundIP() net.IP {
 
 //startMain creates and joins the messenger, default port for WAN is 8301, while default port for LAN is 8300
 func startMain() *continuous.Messenger {
-	fmt.Println("Welcome to Temp Name, please enter your configuration \n 1. Local \n 2. Wide \n 3. Personal \n (Default is Local)")
+	fmt.Println("Welcome to Continuous, please enter your configuration \n 1. Local \n 2. Wide \n 3. Personal \n (Default is Local)")
 	var input string
 	fmt.Scanln(&input)
 	var msngerConfig *conf.MessengerConfig

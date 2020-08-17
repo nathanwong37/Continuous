@@ -16,8 +16,18 @@ import (
 )
 
 var datab = "mysql"
-var connect = "test1:test@tcp(192.168.5.56:3306)/timer"
+var connect = "test1:test@tcp(127.0.0.1:3306)/timer"
 var databName = "timer"
+
+//Transporter interface is an interface to what transporter should have
+type Transporter interface {
+	Get(uuid.UUID, string) (*RetTimerInfo, error)
+	Create(proto.TimerInfo) (bool, error)
+	Remove(uuid.UUID, string) (bool, error)
+	Update(string, string, string, int) (bool, error)
+	GetRows(int) ([]*proto.TimerInfo, error)
+	BuildQuery(string, string, *proto.TimerInfo) (string, error)
+}
 
 //Transport struct just to call methods
 type Transport struct{}
@@ -33,17 +43,6 @@ type RetTimerInfo struct {
 	Mostrecent  string    `json:"mostRecent"`
 	Amountfired int       `json:"amountFired"`
 	Timecreated string    `json:"timeCreated"`
-}
-
-func (transporter *Transport) connect() error {
-
-	db, err := sql.Open(datab, connect)
-	if err != nil {
-		return err
-	}
-
-	defer db.Close()
-	return nil
 }
 
 //Get connects to database, and gets the matching values
@@ -164,6 +163,10 @@ func (transporter *Transport) GetRows(shardID int) ([]*proto.TimerInfo, error) {
 	}
 	query, err := transporter.BuildQuery(databName, "getRow", parameter)
 	results, err := db.Query(query)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 	timers := make([]*proto.TimerInfo, 0)
 	for results.Next() {
 		info := new(proto.TimerInfo)
@@ -219,6 +222,7 @@ func (transporter *Transport) BuildQuery(database, command string, parameter *pr
 	return sql, nil
 }
 
+//should be safe, since we generate uuid
 func addUUID(sql string, uuidstr string) string {
 	sql = (string)([]rune(sql)[:len(sql)-3])
 	sql = sql + "UUID_TO_BIN( '" + uuidstr + "'))"

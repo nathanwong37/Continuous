@@ -1,4 +1,4 @@
-package temp
+package configuration
 
 import (
 	"github.com/hashicorp/memberlist"

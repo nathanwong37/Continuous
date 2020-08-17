@@ -12,6 +12,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type Runner interface {
+	Default(c *gin.Context)
+	Create(c *gin.Context)
+	Get(c *gin.Context)
+	Delete(c *gin.Context)
+}
+
 //MethodRunner is the router that decides what to run
 type MethodRunner struct {
 	messenger *Messenger
