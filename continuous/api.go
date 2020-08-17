@@ -6,6 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//Listen interface is the interface for Listener
+type Listen interface {
+	run(string)
+}
+
 //Listener is used to create a listener
 type Listener struct {
 	messenger *Messenger

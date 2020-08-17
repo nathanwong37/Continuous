@@ -11,6 +11,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+type ContinuousClient interface {
+	Connect(string) (*grpc.ClientConn, error)
+	CreateTimer(int32, string, string, string) (string, error)
+	DeleteTimer(string, string) (int, error)
+}
+
 //GrpcClient is for dial options, as well as to use important methods
 type GrpcClient struct {
 	dialOption []grpc.DialOption

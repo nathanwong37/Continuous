@@ -1,6 +1,7 @@
 package transporter
 
 import (
+	"fmt"
 	"testing"
 
 	proto "github.com/Continuous/plugins"
@@ -21,7 +22,7 @@ func TestGet(t *testing.T) {
 	testTimer := &RetTimerInfo{
 		TimerID:     uuid,
 		ShardID:     1,
-		Namespace:   "Nathan Wong",
+		Namespace:   "Nathan Wong'",
 		Interval:    "00:00:10",
 		Count:       1,
 		Starttime:   "2020-12-24 11:59:50",
@@ -66,7 +67,7 @@ func TestBuildQuery(t *testing.T) {
 	testTimer := &proto.TimerInfo{
 		TimerID:     "716c21b9-0044-4527-8d20-a54c6b8e35fb",
 		ShardID:     344,
-		NameSpace:   "Nathan Wong",
+		NameSpace:   "Nathan Wong) OR (1=1'--')",
 		Interval:    "00:00:10",
 		Count:       1,
 		StartTime:   "2020-08-03 18:18:50",
@@ -78,15 +79,16 @@ func TestBuildQuery(t *testing.T) {
 	// 	fmt.Println(err)
 	// }
 	uu, _ := uuid.Parse(testTimer.TimerID)
-	_, err := transporter.Create(testTimer)
+	// _, err := transporter.Create(testTimer)
+	// assert.NoError(t, err)
+	ret, err := transporter.Get(uu, testTimer.NameSpace)
 	assert.NoError(t, err)
-	_, err = transporter.Get(uu, testTimer.NameSpace)
-	assert.NoError(t, err)
-	_, err = transporter.GetRows(int(testTimer.ShardID))
-	assert.NoError(t, err)
-	_, err = transporter.Update(testTimer.TimerID, testTimer.MostRecent, testTimer.NameSpace, 2)
-	assert.NoError(t, err)
-	_, err = transporter.Remove(uu, testTimer.NameSpace)
-	assert.NoError(t, err)
+	fmt.Println(ret.Namespace)
+	// _, err = transporter.GetRows(int(testTimer.ShardID))
+	// assert.NoError(t, err)
+	// _, err = transporter.Update(testTimer.TimerID, testTimer.MostRecent, testTimer.NameSpace, 2)
+	// assert.NoError(t, err)
+	// _, err = transporter.Remove(uu, testTimer.NameSpace)
+	// assert.NoError(t, err)
 
 }

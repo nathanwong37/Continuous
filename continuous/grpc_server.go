@@ -8,6 +8,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+//ContinuousServer is an interface for grpc Server
+type ContinuousServer interface {
+	proto.ActionsServer
+	Serve(net.Listener) error
+}
+
 //GrpcServer is a struct to call methods
 type GrpcServer struct {
 	messenger *Messenger

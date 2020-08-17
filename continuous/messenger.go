@@ -46,7 +46,7 @@ func NewMessenger(config *conf.MessengerConfig) *Messenger {
 	//Create memberlist first
 	list, err := memberlist.Create(config.MemberConfig)
 	if err != nil {
-		fmt.Println(err.Error())
+		panic(err)
 	}
 	return &Messenger{
 		M:           list,

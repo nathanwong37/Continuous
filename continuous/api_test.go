@@ -15,12 +15,11 @@ func TestRun(t *testing.T) {
 	// conf := memberlist.DefaultLocalConfig()
 	// test := NewMessenger(conf)
 	nodes := []string{
-		"127.0.0.1:2134",
+		"192.168.5.56:7946",
 	}
 	// test.Join(nodes)
 	config2 := memberlist.DefaultLocalConfig()
 	config2.Name = "NotFeelingLucky"
-	config2.BindAddr = "127.0.0.1"
 	config2.BindPort = 2134
 	config2.AdvertisePort = 2134
 	config := conf.CustomConfig(config2, true)
