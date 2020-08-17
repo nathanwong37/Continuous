@@ -1,7 +1,6 @@
 package continuous
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -20,16 +19,4 @@ func TestGrpcConnectionServer(t *testing.T) {
 	require.NoError(t, err)
 	//don't want to close server right away
 	time.Sleep(10 * time.Second)
-}
-
-func TestClientConnection(t *testing.T) {
-	fmt.Println("Testing")
-	config := conf.DefaultConfig()
-	test := NewMessenger(config)
-	client := NewGrpcClient(nil, test)
-	_, err := client.Connect("localhost:4040")
-	if err != nil {
-		panic(err)
-	}
-
 }
