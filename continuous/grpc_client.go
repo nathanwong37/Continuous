@@ -93,8 +93,10 @@ func (client *GrpcClient) DeleteTimer(uuidstr, namespace string) (int, error) {
 		return -1, err
 	}
 	addr, shardResult := client.messenger.GetAddress(uuidstr)
-	addr = trimAddress(addr)
-	addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
+	if !client.messenger.config.LocalConnect {
+		addr = trimAddress(addr)
+		addr = addr + ":" + strconv.Itoa(client.messenger.config.RPCPort)
+	}
 	conn, err := client.Connect(addr)
 	if err != nil {
 		return -1, err

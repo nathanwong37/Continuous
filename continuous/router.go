@@ -67,7 +67,7 @@ func (m *MethodRunner) Create(c *gin.Context) {
 		c.JSON(400, gin.H{"message": "Error"})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"UUID": uuid, "success": 201})
+	c.JSON(http.StatusCreated, gin.H{"UUID": uuid, "success": 201})
 }
 
 //Get just has to get the information from database, needs to be a json obj
