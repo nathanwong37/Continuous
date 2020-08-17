@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//Runner is an interface for MethodRunner
 type Runner interface {
 	Default(c *gin.Context)
 	Create(c *gin.Context)

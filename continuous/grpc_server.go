@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-//ContinuousServer is an interface for grpc Server
-type ContinuousServer interface {
+//Server is an interface for grpc Server
+type Server interface {
 	proto.ActionsServer
 	Serve(net.Listener) error
 }

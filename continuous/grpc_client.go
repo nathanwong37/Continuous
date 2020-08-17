@@ -11,7 +11,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-type ContinuousClient interface {
+//Client is an interface for continuous
+type Client interface {
 	Connect(string) (*grpc.ClientConn, error)
 	CreateTimer(int32, string, string, string) (string, error)
 	DeleteTimer(string, string) (int, error)
