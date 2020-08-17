@@ -73,7 +73,7 @@ func (director *Director) UpdateShards(shard map[int]int, cap int) {
 
 //CreateTimer is used to create the timer in director
 //binary search for manager, if manager doesn't exist create it
-func (director *Director) CreateTimer(Info *proto.TimerInfo) {
+func (director *Director) CreateTimer(Info *proto.TimerInfo) error {
 	target := int(Info.GetShardID())
 	index := binSearchManager(director.managers, 0, len(director.managers)-1, target)
 	//create if doesn't exist
@@ -94,8 +94,9 @@ func (director *Director) CreateTimer(Info *proto.TimerInfo) {
 	err := director.managers[index].CreateTimer(Info)
 	if err != nil {
 		fmt.Println("Error creating timer")
+		return err
 	}
-	return
+	return nil
 }
 
 //binSearchManager is to search through manager in a binary search

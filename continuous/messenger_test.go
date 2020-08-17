@@ -6,60 +6,42 @@ import (
 	"time"
 
 	conf "github.com/Continuous/config"
-	executor "github.com/Continuous/executor"
+	"github.com/hashicorp/memberlist"
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestHashFunc(t *testing.T) {
-// 	conf3 := memberlist.DefaultLocalConfig()
-// 	nodes := []string{
-// 		"127.0.0.1:7946",
-// 	}
-// 	conf := memberlist.DefaultLocalConfig()
-// 	conf.Name = "Test"
-// 	conf.BindPort = 3264
-// 	conf.AdvertisePort = 3264
-// 	conf2 := memberlist.DefaultLocalConfig()
-// 	conf2.Name = "Test2"
-// 	conf2.BindPort = 2134
-// 	conf2.AdvertisePort = 2134
-// 	conf4 := memberlist.DefaultLocalConfig()
-// 	conf4.Name = "Test3"
-// 	conf4.BindPort = 3125
-// 	conf4.AdvertisePort = 3125
-// 	test := NewMessenger(conf.CustomConfig(conf3, true))
-// 	test.Join(nodes)
-// 	test2 := NewMessenger(coCustomConfig(conf, true))
-// 	test2.Join(nodes)
-// 	test3 := NewMessenger(CustomConfig(conf2, true))
-// 	test3.Join(nodes)
-// 	test4 := NewMessenger(CustomConfig(conf4, true))
-// 	test4.Join(nodes)
-// 	time.Sleep(5 * time.Second)
-// 	test.printKeys()
-// 	test2.printKeys()
-// 	test3.printKeys()
-// 	test4.printKeys()
-// }
-
-func TestDirector(t *testing.T) {
-	config3 := conf.DefaultConfig()
+func TestMessenger(t *testing.T) {
 	nodes := []string{
-		"127.0.0.1:7946",
+		"localhost:7946",
 	}
-	test := NewMessenger(config3)
-	test.Join(nodes)
-	a := test.syncShards()
-	b := executor.NewDirector()
-	b.UpdateShards(a, test.shard)
-
+	messenger1 := NewMessenger(conf.CustomConfig(memberlist.DefaultLANConfig(), true))
+	messenger1.Join(nodes)
+	memberconfig := memberlist.DefaultLANConfig()
+	memberconfig.Name = "Node1"
+	memberconfig.BindPort = 1234
+	memberconfig.AdvertisePort = 1234
+	messenger2 := NewMessenger(conf.CustomConfig(memberconfig, true))
+	messenger2.Join(nodes)
+	memberconfig2 := memberlist.DefaultLANConfig()
+	memberconfig2.Name = "Node2"
+	memberconfig2.BindPort = 2134
+	memberconfig2.AdvertisePort = 2134
+	messenger3 := NewMessenger(conf.CustomConfig(memberconfig2, true))
+	messenger3.Join(nodes)
+	time.Sleep(2 * time.Second)
+	numNodes := messenger3.M.NumMembers()
+	assert.Equal(t, 3, numNodes)
+	messenger2.shutDown()
+	time.Sleep(2 * time.Second)
+	numNodes = messenger3.M.NumMembers()
+	assert.Equal(t, 2, numNodes)
 }
 
 func TestBinarySearch(t *testing.T) {
 	arrs := [9]int{0, 1, 2, 3, 4, 5, 6, 7, 8}
 	var arr []int = arrs[0:9]
-	a := binarySearch(arr, 0, len(arr)-1, 7)
-	fmt.Printf("%d\n", a)
+	index := binarySearch(arr, 0, len(arr)-1, 7)
+	assert.Equal(t, index, 7)
 }
 
 func TestAddress(t *testing.T) {
